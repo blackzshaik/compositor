@@ -1,0 +1,61 @@
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Android & Gradle
+.gradle/
+build/
+*/build/
+captures/
+.externalNativeBuild
+.cxx/
+local.properties
+*.apk
+*.ap_
+*.aab
+*.dex
+*.class
+
+# Kotlin
+.kotlin/
+
+# Node.js & Web Viewer
+node_modules/
+dist/
+.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.turbo/
+
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+*.keystore
+*.jks
+
+# IDEs and Editors
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.sublime-project
+*.sublime-workspace
+
+# Compositor Temporary Artifacts
+.compositor/
+*.preview.png
+preview-cache/
