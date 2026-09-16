@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.paparazzi)
 }
 
 android {
@@ -35,4 +36,12 @@ dependencies {
     implementation(libs.compose.material3)
 
     debugImplementation(libs.compose.ui.tooling)
+}
+
+tasks.register<Copy>("exportLatestPreview") {
+    dependsOn("recordPaparazziDebug")
+    from("src/test/snapshots/images")
+    include("**/*.png")
+    into(rootProject.layout.projectDirectory.dir(".compositor"))
+    rename { "latest_preview.png" }
 }

@@ -13,11 +13,11 @@
 | **Repository Foundation** | 🟢 Complete | `.gitignore`, `.editorconfig`, `LICENSE`, `README.md`. |
 | **Architecture & Standards**| 🟢 Complete | `docs/ARCHITECTURE.md`, `docs/CODING_STANDARDS.md`, `docs/CONTRIBUTING.md`. |
 | **Agent Operational Rules** | 🟢 Complete | `AGENT.md` anti-slop rules, modular boundaries. |
-| **Kotlin Quality Gates**    | 🟢 Complete | Detekt `1.23.8` configured, Kover `0.9.9` configured, Gradle 9.5 wrapper generated. |
+| **Kotlin Quality Gates**    | 🟢 Complete | Detekt `1.23.8` configured, Kover `0.9.9` configured, Gradle 8.12 LTS wrapper configured. |
 | **TypeScript Quality Gates** | 🟢 Complete | ESLint 9+ (`@typescript-eslint`), Prettier, Vitest with `@vitest/coverage-v8` in `web-viewer/`. |
 | **Agent Brain (`brain/`)**   | 🟢 Complete | ADRs (`DECISIONS.md`), post-mortems (`MISTAKES_AND_CORRECTIONS.md`), state tracking (`STATE.md`). |
 | **Tracer Bullet Orchestration** | 🟢 Ready | Complete micro-implementation suite in `brain/tracer-bullet-initial-implementation/`. |
-| **Active Micro-Step**        | 🟡 Step 02 Ready | `step-02-headless-render-spike.md` is active and ready for execution. |
+| **Active Micro-Step**        | 🟡 Step 03 Ready | `step-03-local-preview-server.md` is active and ready for execution. |
 
 ---
 
@@ -26,7 +26,7 @@
 * **JDK 21**: `C:\Program Files\Android\openjdk\jdk-21.0.8` (required for AGP & Gradle)
 * **Android SDK**: `C:\Users\jahab\AppData\Local\Android\Sdk`
 * **Node.js**: v24.16.0 LTS with npm 11.13.0
-* **Gradle Wrapper**: 9.5.0 (`gradlew.bat`)
+* **Gradle Wrapper**: 8.12 LTS (`gradlew.bat`)
 
 ---
 
@@ -36,8 +36,8 @@ The project is currently executing the **Tracer Bullet** plan defined in [`brain
 
 ### Step Progression Tracker:
 - [x] **Step 01**: [`step-01-sample-composable.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/step-01-sample-composable.md) ✅ COMPLETE
-- [ ] **Step 02**: [`step-02-headless-render-spike.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/step-02-headless-render-spike.md) ◀ **CURRENT ACTIVE STEP**
-- [ ] **Step 03**: [`step-03-local-preview-server.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/step-03-local-preview-server.md)
+- [x] **Step 02**: [`step-02-headless-render-spike.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/step-02-headless-render-spike.md) ✅ COMPLETE
+- [ ] **Step 03**: [`step-03-local-preview-server.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/step-03-local-preview-server.md) ◀ **CURRENT ACTIVE STEP**
 - [ ] **Step 04**: [`step-04-web-canvas-display.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/step-04-web-canvas-display.md)
 - [ ] **Step 05**: [`step-05-end-to-end-verification.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/step-05-end-to-end-verification.md)
 

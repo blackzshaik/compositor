@@ -70,3 +70,17 @@ This document serves as an institutional memory log of engineering pitfalls, pla
   2. Kotlin Android Gradle Plugin must be managed via version catalog and applied with `apply false` in root `build.gradle.kts` to guarantee subprojects resolve the matching version.
 * **Correction & Prevention**:
   Ensure `gradle.properties` contains `android.useAndroidX=true`. Always define `kotlin-android` in `gradle/libs.versions.toml` and declare `alias(libs.plugins.kotlin.android) apply false` in root `build.gradle.kts`.
+
+---
+
+### Entry 006: Gradle 9.x vs AGP 8.8 TestResultsProvider Incompatibility
+* **Date**: September 2026
+* **Category**: Gradle Tooling / AGP Compatibility
+* **Symptom**:
+  Running `:samples:sample-app:testDebugUnitTest` under Gradle 9.5 failed with:
+  `NoSuchMethodError: 'boolean org.gradle.api.internal.tasks.testing.junit.result.TestResultsProvider.hasOutput(long, ...)'`.
+* **Root Cause**:
+  AGP 8.8 is designed for Gradle 8.10.2 - 8.12. Gradle 9.x removed internal testing methods that AGP 8.8's test reporting task invokes.
+* **Correction & Prevention**:
+  Anchor Gradle wrapper strictly to Gradle 8.12 LTS in `gradle/wrapper/gradle-wrapper.properties`:
+  `distributionUrl=https\://services.gradle.org/distributions/gradle-8.12-bin.zip`.
