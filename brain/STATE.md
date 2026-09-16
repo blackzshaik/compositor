@@ -17,7 +17,7 @@
 | **TypeScript Quality Gates** | 🟢 Complete | ESLint 9+ (`@typescript-eslint`), Prettier, Vitest with `@vitest/coverage-v8` in `web-viewer/`. |
 | **Agent Brain (`brain/`)**   | 🟢 Complete | ADRs (`DECISIONS.md`), post-mortems (`MISTAKES_AND_CORRECTIONS.md`), state tracking (`STATE.md`). |
 | **Tracer Bullet Orchestration** | 🟢 Ready | Complete micro-implementation suite in `brain/tracer-bullet-initial-implementation/`. |
-| **Active Micro-Step**        | 🟡 Step 04 Ready | `step-04-web-canvas-display.md` is active and ready for execution. |
+| **Active Micro-Step**        | 🟡 Step 05 Ready | `step-05-end-to-end-verification.md` is active and ready for execution. |
 
 ---
 
@@ -38,8 +38,8 @@ The project is currently executing the **Tracer Bullet** plan defined in [`brain
 - [x] **Step 01**: [`step-01-sample-composable.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/step-01-sample-composable.md) ✅ COMPLETE
 - [x] **Step 02**: [`step-02-headless-render-spike.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/step-02-headless-render-spike.md) ✅ COMPLETE
 - [x] **Step 03**: [`step-03-local-preview-server.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/step-03-local-preview-server.md) ✅ COMPLETE
-- [ ] **Step 04**: [`step-04-web-canvas-display.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/step-04-web-canvas-display.md) ◀ **CURRENT ACTIVE STEP**
-- [ ] **Step 05**: [`step-05-end-to-end-verification.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/step-05-end-to-end-verification.md)
+- [x] **Step 04**: [`step-04-web-canvas-display.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/step-04-web-canvas-display.md) ✅ COMPLETE
+- [ ] **Step 05**: [`step-05-end-to-end-verification.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/step-05-end-to-end-verification.md) ◀ **CURRENT ACTIVE STEP**
 
 ### AI Agent Command Trigger:
 To advance this plan in any fresh session, prompt the AI agent with:
