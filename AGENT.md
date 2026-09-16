@@ -34,6 +34,11 @@ This project is developed with AI assistance under human review. To prevent low-
 
 ```
 compositor/
+├── brain/                     # AI Agent persistent memory, ADRs, and mistake catalog
+│   ├── README.md              # Cognitive protocol for LLMs
+│   ├── DECISIONS.md           # Architectural Decision Records (ADRs)
+│   ├── MISTAKES_AND_CORRECTIONS.md # Traps, bugs, and platform post-mortems
+│   └── STATE.md               # Living snapshot of progress and priorities
 ├── docs/                      # Architectural specifications & standards
 │   ├── ARCHITECTURE.md        # In-depth subsystem design and data flow
 │   ├── CODING_STANDARDS.md    # Language conventions, linting, formatting
@@ -56,19 +61,33 @@ compositor/
 
 ---
 
-## 3. Local Environment & Tooling Specs
+## 3. The `brain/` AI Agent Protocol
 
-* **Operating System**: Windows (PowerShell environment)
-* **JDK Version**: Java 21 (located at `C:\Program Files\Android\openjdk\jdk-21.0.8`)
-* **Android SDK**: `C:\Users\jahab\AppData\Local\Android\Sdk`
-* **Node.js**: v24.x LTS with npm
-* **Code Formatting**: 
-  - Kotlin: Follow `.editorconfig` & `ktlint` standards (4 spaces indent, 120 char line max).
-  - TypeScript: Follow `.editorconfig` & `prettier` (2 spaces indent).
+1. **Mandatory Pre-Flight Check**:
+   - Before executing any task, inspect [`brain/STATE.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/STATE.md) to understand current progress and [`brain/MISTAKES_AND_CORRECTIONS.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/MISTAKES_AND_CORRECTIONS.md) to avoid known pitfalls.
+2. **Post-Task Debrief**:
+   - Upon encountering and resolving any tricky problem (build failure, platform incompatibility, unexpected framework behavior), append a new entry to `brain/MISTAKES_AND_CORRECTIONS.md`.
+   - Update `brain/STATE.md` to reflect newly verified components and next immediate priorities.
+   - For architectural choices, log an ADR in `brain/DECISIONS.md`.
 
 ---
 
-## 4. Git & Commit Guidelines
+## 4. Local Environment & Quality Gates
+
+* **Operating System**: Windows (PowerShell environment)
+* **JDK Version**: Java 21 (`C:\Program Files\Android\openjdk\jdk-21.0.8`)
+* **Android SDK**: `C:\Users\jahab\AppData\Local\Android\Sdk`
+* **Node.js**: v24.x LTS with npm
+
+### Automated Quality Checks:
+* **Kotlin Static Analysis**: `./gradlew detekt` (enforces 120 char max line length, complexity, and safety).
+* **Kotlin Test Coverage**: `./gradlew koverHtmlReport`.
+* **TypeScript Linting**: `npm run lint` inside `web-viewer/` (enforces no `any` and 120 char max line length).
+* **TypeScript Coverage**: `npm run test:coverage` inside `web-viewer/`.
+
+---
+
+## 5. Git & Commit Guidelines
 
 * Use **Conventional Commits**:
   - `feat: <description>` for new capabilities

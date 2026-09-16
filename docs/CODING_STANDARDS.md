@@ -49,13 +49,49 @@ This document outlines the engineering practices, coding standards, and quality 
 
 ---
 
-## 4. Testing Requirements
+## 4. Automated Quality Gates
+
+### 4.1. Kotlin Static Analysis & Coverage
+* **Detekt**:
+  * Run static analysis: `./gradlew detekt`
+  * Configuration: [`config/detekt/detekt.yml`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/config/detekt/detekt.yml)
+  * Enforces: Line length max 120 (including comments), cyclomatic complexity < 15, method length < 60, forbidden double-bang `!!`, no wildcard imports.
+* **Kover (Code Coverage)**:
+  * Generate HTML report: `./gradlew koverHtmlReport` (output: `build/reports/kover/html/index.html`)
+  * Generate XML report: `./gradlew koverXmlReport`
+  * Verify coverage thresholds: `./gradlew koverVerify`
+
+### 4.2. TypeScript Static Analysis & Coverage
+* **ESLint & Prettier**:
+  * Run linter: `npm run lint` inside `web-viewer/`
+  * Auto-fix style: `npm run lint:fix`
+  * Check formatting: `npm run format:check`
+  * Type check without emitting: `npm run typecheck`
+* **Vitest Coverage**:
+  * Run unit tests: `npm test`
+  * Run coverage analysis: `npm run test:coverage` (enforces 80% coverage threshold across statements, lines, and functions).
+
+---
+
+## 5. Testing Requirements
 
 * **Unit Tests**:
   * Every parser, utility, and state machine must have comprehensive unit tests.
   * Kotlin tests use JUnit 5 + MockK / Truth or Kotlin-test.
-  * TypeScript tests use Vitest.
+  * TypeScript tests use Vitest + Testing Library.
 * **Integration Tests**:
   * Must verify end-to-end rendering against real sample composables in `samples/sample-app`.
-* **Continuous Integration**:
-  * All PRs must pass `ktlintCheck`, `npm run lint`, and test suites before merging.
+
+---
+
+## 6. Future Git Pre-Commit Hook Roadmap
+
+> [!NOTE]
+> **Breathing Space for Early Development**:
+> During initial scaffolding and active feature bootstrapping, quality checks are run manually via `./gradlew detekt` and `npm run lint` rather than being hard-blocked in a local `pre-commit` hook. This ensures rapid developer velocity.
+>
+> **Future Hard Enforcement**:
+> Once core pipelines stabilize, pre-commit checks will be enabled via Git hooks (or Lefthook) to block commits failing:
+> 1. `./gradlew detekt`
+> 2. `npm run lint` & `npm run typecheck`
+> 3. Fast unit tests.

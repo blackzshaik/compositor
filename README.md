@@ -72,6 +72,11 @@ When developing native Android applications outside Android Studio (e.g. in Curs
 
 ```
 compositor/
+├── brain/                     # AI Agent persistent memory, ADRs & mistake catalog
+│   ├── README.md              # Cognitive protocol for LLMs
+│   ├── DECISIONS.md           # Architectural Decision Records (ADRs)
+│   ├── MISTAKES_AND_CORRECTIONS.md # Traps, bugs & post-mortems
+│   └── STATE.md               # Living snapshot of progress & priorities
 ├── docs/                      # Architectural specifications & standards
 │   ├── ARCHITECTURE.md        # Subsystem deep dive & IPC protocols
 │   ├── CODING_STANDARDS.md    # Language rules & quality gates
