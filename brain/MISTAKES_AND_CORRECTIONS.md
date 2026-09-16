@@ -56,3 +56,17 @@ This document serves as an institutional memory log of engineering pitfalls, pla
   Markdown guidelines alone are insufficient without automated static analysis enforcement.
 * **Correction & Prevention**:
   Configure **Detekt** (`MaxLineLength: 120` with `excludeCommentStatements: false`) for Kotlin and **ESLint** (`max-len: 120`) for TypeScript. Run `./gradlew detekt` and `npm run lint` to enforce formatting automatically.
+
+---
+
+### Entry 005: AndroidX Flag & Subproject Plugin Management
+* **Date**: September 2026
+* **Category**: Android Build System / AGP
+* **Symptom**:
+  `checkDebugAarMetadata` failed with: `Configuration contains AndroidX dependencies, but the android.useAndroidX property is not enabled`.
+  Subproject build scripts applying `id("org.jetbrains.kotlin.android")` directly failed with `ClassNotFoundException: com/android/build/gradle/api/BaseVariant`.
+* **Root Cause**:
+  1. AGP strictly requires `android.useAndroidX=true` in `gradle.properties`.
+  2. Kotlin Android Gradle Plugin must be managed via version catalog and applied with `apply false` in root `build.gradle.kts` to guarantee subprojects resolve the matching version.
+* **Correction & Prevention**:
+  Ensure `gradle.properties` contains `android.useAndroidX=true`. Always define `kotlin-android` in `gradle/libs.versions.toml` and declare `alias(libs.plugins.kotlin.android) apply false` in root `build.gradle.kts`.

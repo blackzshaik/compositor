@@ -17,3 +17,4 @@ dependencyResolutionManagement {
 rootProject.name = "compositor"
 
 include(":core-renderer")
+include(":samples:sample-app")

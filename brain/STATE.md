@@ -17,7 +17,7 @@
 | **TypeScript Quality Gates** | 🟢 Complete | ESLint 9+ (`@typescript-eslint`), Prettier, Vitest with `@vitest/coverage-v8` in `web-viewer/`. |
 | **Agent Brain (`brain/`)**   | 🟢 Complete | ADRs (`DECISIONS.md`), post-mortems (`MISTAKES_AND_CORRECTIONS.md`), state tracking (`STATE.md`). |
 | **Tracer Bullet Orchestration** | 🟢 Ready | Complete micro-implementation suite in `brain/tracer-bullet-initial-implementation/`. |
-| **Active Micro-Step**        | 🟡 Step 01 Ready | `step-01-sample-composable.md` is active and ready for execution. |
+| **Active Micro-Step**        | 🟡 Step 02 Ready | `step-02-headless-render-spike.md` is active and ready for execution. |
 
 ---
 
@@ -35,8 +35,8 @@
 The project is currently executing the **Tracer Bullet** plan defined in [`brain/tracer-bullet-initial-implementation/INDEX.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/INDEX.md).
 
 ### Step Progression Tracker:
-- [ ] **Step 01**: [`step-01-sample-composable.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/step-01-sample-composable.md) ◀ **CURRENT ACTIVE STEP**
-- [ ] **Step 02**: [`step-02-headless-render-spike.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/step-02-headless-render-spike.md)
+- [x] **Step 01**: [`step-01-sample-composable.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/step-01-sample-composable.md) ✅ COMPLETE
+- [ ] **Step 02**: [`step-02-headless-render-spike.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/step-02-headless-render-spike.md) ◀ **CURRENT ACTIVE STEP**
 - [ ] **Step 03**: [`step-03-local-preview-server.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/step-03-local-preview-server.md)
 - [ ] **Step 04**: [`step-04-web-canvas-display.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/step-04-web-canvas-display.md)
 - [ ] **Step 05**: [`step-05-end-to-end-verification.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/step-05-end-to-end-verification.md)
