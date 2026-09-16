@@ -16,10 +16,8 @@
 | **Kotlin Quality Gates**    | 🟢 Complete | Detekt `1.23.8` configured, Kover `0.9.9` configured, Gradle 9.5 wrapper generated. |
 | **TypeScript Quality Gates** | 🟢 Complete | ESLint 9+ (`@typescript-eslint`), Prettier, Vitest with `@vitest/coverage-v8` in `web-viewer/`. |
 | **Agent Brain (`brain/`)**   | 🟢 Complete | ADRs (`DECISIONS.md`), post-mortems (`MISTAKES_AND_CORRECTIONS.md`), state tracking (`STATE.md`). |
-| **Core Headless Renderer**  | ⚪ Pending | Phase 2 target (`core-renderer/`). |
-| **CLI & File Watcher**      | ⚪ Pending | Phase 3 target (`cli/`). |
-| **Web Viewer Frontend**     | 🟡 Scaffolding Ready | Package & configs ready; UI implementation in Phase 3. |
-| **AI Vision Bridge (MCP)**  | ⚪ Pending | Phase 4 target (`mcp-server/`). |
+| **Tracer Bullet Orchestration** | 🟢 Ready | Complete micro-implementation suite in `brain/tracer-bullet-initial-implementation/`. |
+| **Active Micro-Step**        | 🟡 Step 01 Ready | `step-01-sample-composable.md` is active and ready for execution. |
 
 ---
 
@@ -32,12 +30,20 @@
 
 ---
 
-## 🎯 Next Immediate Priorities (Phase 2)
+## 🎯 Active Execution Plan: Tracer Bullet (Thin Vertical Slice)
 
-1. **Reference Android Sample App (`samples/sample-app/`)**:
-   - Create a clean Jetpack Compose Android app with standard `@Preview` composables (`GreetingPreview`, `ButtonCardPreview`, `UserProfilePreview`).
-2. **Core Headless Renderer (`core-renderer/`)**:
-   - Implement `@Preview` annotation discovery.
-   - Setup LayoutLib / `compose-preview-renderer` runtime execution on the JVM.
-   - Rasterize Compose UI to PNG output file.
-   - Unit and integration tests with Kover coverage verification.
+The project is currently executing the **Tracer Bullet** plan defined in [`brain/tracer-bullet-initial-implementation/INDEX.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/INDEX.md).
+
+### Step Progression Tracker:
+- [ ] **Step 01**: [`step-01-sample-composable.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/step-01-sample-composable.md) ◀ **CURRENT ACTIVE STEP**
+- [ ] **Step 02**: [`step-02-headless-render-spike.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/step-02-headless-render-spike.md)
+- [ ] **Step 03**: [`step-03-local-preview-server.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/step-03-local-preview-server.md)
+- [ ] **Step 04**: [`step-04-web-canvas-display.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/step-04-web-canvas-display.md)
+- [ ] **Step 05**: [`step-05-end-to-end-verification.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/step-05-end-to-end-verification.md)
+
+### AI Agent Command Trigger:
+To advance this plan in any fresh session, prompt the AI agent with:
+```
+Build from brain: tracer-bullet-initial-implementation
+```
+The agent will read `INDEX.md`, execute the active step, run the verification gate, record the before/after execution log, and advance this status tracker.
