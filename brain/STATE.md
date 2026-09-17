@@ -15,9 +15,12 @@
 | **Agent Operational Rules** | 🟢 Complete | `AGENT.md` anti-slop rules, modular boundaries. |
 | **Kotlin Quality Gates**    | 🟢 Complete | Detekt `1.23.8` configured, Kover `0.9.9` configured, Gradle 8.12 LTS wrapper configured. |
 | **TypeScript Quality Gates** | 🟢 Complete | ESLint 9+ (`@typescript-eslint`), Prettier, Vitest with `@vitest/coverage-v8` in `web-viewer/`. |
-| **Agent Brain (`brain/`)**   | 🟢 Complete | ADRs (`DECISIONS.md`), post-mortems (`MISTAKES_AND_CORRECTIONS.md`), state tracking (`STATE.md`). |
-| **Tracer Bullet Orchestration** | 🟢 Complete | All 5 micro-steps executed and verified end-to-end. |
-| **Active Micro-Step**        | 🟢 All Complete | Tracer Bullet Thin Vertical Slice achieved. |
+| **Agent Brain (`brain/`)**   | 🟢 Complete | ADRs, post-mortems, and roadmap micro-implementation specs. |
+| **Tracer Bullet E2E Spike**  | 🟢 Complete | Verified end-to-end (Composable -> LayoutLib -> Daemon -> Web Viewer). |
+| **Phase 1: Auto-Watch Daemon & Engine** | 🟡 Ready for Dev | Detailed specs in `brain/phase-1-daemon-and-engine/`. |
+| **Phase 2: Production Web Viewer**      | ⚪ Planned | Detailed specs in `brain/phase-2-web-viewer-inspector/`. |
+| **Phase 3: AI Vision Bridge (MCP)**     | ⚪ Planned | Detailed specs in `brain/phase-3-ai-agent-vision-bridge/`. |
+| **Phase 4: IDE Extensions (VS Code)**   | ⚪ Planned | Detailed specs in `brain/phase-4-ide-extensions/`. |
 
 ---
 
@@ -30,20 +33,52 @@
 
 ---
 
-## 🎯 Active Execution Plan: Tracer Bullet (Thin Vertical Slice)
+## 🎯 Active Execution Tracks in Brain
 
-The project is currently executing the **Tracer Bullet** plan defined in [`brain/tracer-bullet-initial-implementation/INDEX.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/INDEX.md).
+### 1. Tracer Bullet (Thin Vertical Slice) — [COMPLETE ✅]
+Master Orchestrator: [`brain/tracer-bullet-initial-implementation/INDEX.md`](./tracer-bullet-initial-implementation/INDEX.md)
+- [x] Step 01: Minimal Compose App with `GreetingPreview`
+- [x] Step 02: Headless LayoutLib JVM Render Spike
+- [x] Step 03: Local Preview Server (HTTP & WS)
+- [x] Step 04: Web Canvas Display & Live Device Mockup
+- [x] Step 05: E2E Verification & Latency Benchmark
 
-### Step Progression Tracker:
-- [x] **Step 01**: [`step-01-sample-composable.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/step-01-sample-composable.md) ✅ COMPLETE
-- [x] **Step 02**: [`step-02-headless-render-spike.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/step-02-headless-render-spike.md) ✅ COMPLETE
-- [x] **Step 03**: [`step-03-local-preview-server.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/step-03-local-preview-server.md) ✅ COMPLETE
-- [x] **Step 04**: [`step-04-web-canvas-display.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/step-04-web-canvas-display.md) ✅ COMPLETE
-- [x] **Step 05**: [`step-05-end-to-end-verification.md`](file:///c:/Users/jahab/Documents/antigravity/bold-raman/brain/tracer-bullet-initial-implementation/step-05-end-to-end-verification.md) ✅ COMPLETE
+### 2. Phase 1: Real-Time Auto-Watch Daemon & Incremental Engine — [ACTIVE ◀]
+Master Orchestrator: [`brain/phase-1-daemon-and-engine/INDEX.md`](./phase-1-daemon-and-engine/INDEX.md)
+- [ ] Step 01: [`step-01-preview-ast-parser.md`](./phase-1-daemon-and-engine/step-01-preview-ast-parser.md) ◀ **NEXT STEP**
+- [ ] Step 02: [`step-02-preview-index-model.md`](./phase-1-daemon-and-engine/step-02-preview-index-model.md)
+- [ ] Step 03: [`step-03-file-watcher-daemon.md`](./phase-1-daemon-and-engine/step-03-file-watcher-daemon.md)
+- [ ] Step 04: [`step-04-incremental-render-pipeline.md`](./phase-1-daemon-and-engine/step-04-incremental-render-pipeline.md)
+- [ ] Step 05: [`step-05-daemon-rest-api.md`](./phase-1-daemon-and-engine/step-05-daemon-rest-api.md)
 
-### AI Agent Command Trigger:
-To advance this plan in any fresh session, prompt the AI agent with:
-```
-Build from brain: tracer-bullet-initial-implementation
-```
-The agent will read `INDEX.md`, execute the active step, run the verification gate, record the before/after execution log, and advance this status tracker.
+### 3. Phase 2: Production Web Viewer & Interactive Canvas — [PLANNED ⚪]
+Master Orchestrator: [`brain/phase-2-web-viewer-inspector/INDEX.md`](./phase-2-web-viewer-inspector/INDEX.md)
+- [ ] Step 01: Multi-Module Preview Sidebar & Search
+- [ ] Step 02: Multi-Device Bezel Mockups & Form Factors
+- [ ] Step 03: Theme, Typography & Orientation Controls
+- [ ] Step 04: Multi-Preview Matrix & Side-by-Side Comparison
+- [ ] Step 05: Element Bounds & Semantic Inspector Overlay
+- [ ] Step 06: Error Diagnostics & Resilient Error Boundary
+
+### 4. Phase 3: AI Agent Vision Bridge (Model Context Protocol - MCP) — [PLANNED ⚪]
+Master Orchestrator: [`brain/phase-3-ai-agent-vision-bridge/INDEX.md`](./phase-3-ai-agent-vision-bridge/INDEX.md)
+- [ ] Step 01: MCP Server Initialization & Transport
+- [ ] Step 02: Preview Catalog & Execution Tools (`list_previews`, `render_preview`)
+- [ ] Step 03: Multimodal Vision & Layout Inspection Tools (`get_preview_image`, `inspect_layout_tree`)
+- [ ] Step 04: Visual Regression & Layout Diffing Tool (`compare_previews`)
+
+### 5. Phase 4: IDE Extensions & Plugin Ecosystem (VS Code / Cursor) — [PLANNED ⚪]
+Master Orchestrator: [`brain/phase-4-ide-extensions/INDEX.md`](./phase-4-ide-extensions/INDEX.md)
+- [ ] Step 01: VS Code Extension Scaffolding
+- [ ] Step 02: Sidebar Webview Panel Integration
+- [ ] Step 03: Command Palette & Status Bar Integration
+- [ ] Step 04: Workspace Auto-Detection & Daemon Lifecycle
+
+---
+
+## 🤖 AI Agent Command Triggers
+To advance any track in a fresh session, prompt the AI agent with:
+* `Build from brain: phase-1-step-01` (or `Build from brain: phase-1`)
+* `Build from brain: phase-2`
+* `Build from brain: phase-3`
+* `Build from brain: phase-4`
