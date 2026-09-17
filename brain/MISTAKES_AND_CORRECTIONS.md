@@ -98,3 +98,18 @@ This document serves as an institutional memory log of engineering pitfalls, pla
   1. Add `org.gradle.java.home=C:/Program Files/Android/openjdk/jdk-21.0.8` to `gradle.properties`.
   2. In `render-dispatcher.ts`, explicitly resolve and prioritize JDK 21 over system environment, and prepend JDK 21's `bin` directory to `PATH` in the spawned child process environment.
 
+---
+
+### Entry 008: Tailwind CSS v4 Requires `@tailwindcss/vite` Plugin & Daemon URL Proxying
+* **Date**: September 2026
+* **Category**: Frontend Tooling / Vite / Tailwind CSS v4
+* **Symptom**:
+  The web viewer dashboard appeared completely unstyled with broken layouts and missing preview images (showing fallback "Rendering preview..." SVG).
+* **Root Cause**:
+  1. Tailwind CSS v4 uses a dedicated Vite plugin (`@tailwindcss/vite`). Without this plugin configured in `vite.config.ts`, `@import "tailwindcss";` leaves utility layers uncompiled in Vite builds, generating zero CSS utility rules.
+  2. The daemon serves relative image endpoints (`/api/previews/...`). When the web client ran on port 3000, unproxied relative requests targeted Vite's dev server rather than daemon port 3001, resulting in 404 image errors.
+* **Correction & Prevention**:
+  1. Always install and configure `@tailwindcss/vite` in `vite.config.ts`.
+  2. Configure `/api` proxy in `vite.config.ts` targeting `http://localhost:3001` and use `resolvePreviewUrl()` to guarantee preview bitmaps always resolve to the active daemon host.
+
+

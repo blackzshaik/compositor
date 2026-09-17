@@ -28,6 +28,7 @@ local.properties
 # Node.js & Web Viewer
 node_modules/
 dist/
+coverage/
 .vite/
 npm-debug.log*
 yarn-debug.log*

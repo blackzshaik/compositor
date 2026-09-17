@@ -1,104 +1,95 @@
-import React, { useState, useEffect } from 'react';
-import { DeviceFrame } from './components/DeviceFrame';
+import React from 'react';
+import { PreviewConfigProvider, usePreviewConfig } from './context/PreviewConfigContext';
+import { PreviewCatalogProvider, usePreviewCatalog } from './context/PreviewCatalogContext';
+import { TopBar } from './components/controls/TopBar';
+import { Sidebar } from './components/sidebar/Sidebar';
+import { DeviceFrame } from './components/device/DeviceFrame';
+import { CanvasViewport } from './components/device/CanvasViewport';
+import { MatrixGrid } from './components/matrix/MatrixGrid';
+import { InspectorOverlay } from './components/inspector/InspectorOverlay';
+import { InspectorDrawer } from './components/inspector/InspectorDrawer';
+import { ErrorBoundary } from './components/diagnostics/ErrorBoundary';
+import { ErrorOverlay } from './components/diagnostics/ErrorOverlay';
+import { DEVICE_PROFILES } from './components/device/deviceProfiles';
+import { resolvePreviewUrl } from './utils/url';
 
-const HTTP_BASE = 'http://localhost:3001';
-const WS_URL = 'ws://localhost:3002';
+const AppContent: React.FC = () => {
+  const {
+    deviceProfile,
+    orientation,
+    viewMode,
+    themeMode,
+  } = usePreviewConfig();
 
-export const App: React.FC = () => {
-  const [imageUrl, setImageUrl] = useState<string>(`${HTTP_BASE}/api/preview/latest.png?v=${Date.now()}`);
-  const [connected, setConnected] = useState<boolean>(false);
-  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
-  const [refreshCount, setRefreshCount] = useState<number>(0);
+  const { activePreview, httpBase } = usePreviewCatalog();
 
-  useEffect(() => {
-    let ws: WebSocket | null = null;
-    let reconnectTimeout: NodeJS.Timeout;
+  const profile = DEVICE_PROFILES[deviceProfile] || DEVICE_PROFILES['pixel-8'];
+  const isLandscape = orientation === 'landscape';
+  const width = isLandscape ? profile.heightDp : profile.widthDp;
+  const height = isLandscape ? profile.widthDp : profile.heightDp;
 
-    function connect() {
-      try {
-        ws = new WebSocket(WS_URL);
+  const imageUrl = resolvePreviewUrl(
+    activePreview ? activePreview.imageUrl : null,
+    httpBase
+  );
 
-        ws.onopen = () => {
-          setConnected(true);
-        };
+  const title = activePreview
+    ? activePreview.definition.parameters.name || activePreview.definition.functionName
+    : 'GreetingPreview';
 
-        ws.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            if (data.event === 'PREVIEW_UPDATED') {
-              setImageUrl(`${HTTP_BASE}${data.payload.url}`);
-              setLastUpdated(new Date());
-              setRefreshCount((prev) => prev + 1);
-            }
-          } catch (err) {
-            console.error('Failed to parse WebSocket message:', err);
-          }
-        };
-
-        ws.onclose = () => {
-          setConnected(false);
-          reconnectTimeout = setTimeout(connect, 2000);
-        };
-
-        ws.onerror = () => {
-          ws?.close();
-        };
-      } catch {
-        reconnectTimeout = setTimeout(connect, 2000);
-      }
-    }
-
-    connect();
-
-    return () => {
-      ws?.close();
-      clearTimeout(reconnectTimeout);
-    };
-  }, []);
-
-  const manualReload = () => {
-    setImageUrl(`${HTTP_BASE}/api/preview/latest.png?v=${Date.now()}`);
-    setLastUpdated(new Date());
-  };
+  const isLoading = activePreview?.status === 'Rendering';
 
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Navigation Header */}
-      <header className="flex items-center justify-between px-6 py-4 border-b border-neutral-800 bg-neutral-900/50 backdrop-blur-md">
-        <div className="flex items-center gap-3">
-          <span className="text-2xl">🎨</span>
-          <span className="font-bold text-lg tracking-tight">Compositor</span>
-          <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-900/50 text-purple-300 border border-purple-700/50">
-            Tracer Bullet
-          </span>
-        </div>
+    <div className="flex flex-col h-screen w-screen bg-neutral-950 text-neutral-100 overflow-hidden font-sans">
+      {/* Top Controls Bar */}
+      <TopBar />
 
-        <div className="flex items-center gap-4 text-sm">
-          <div className="flex items-center gap-2">
-            <span className={`w-2.5 h-2.5 rounded-full ${connected ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
-            <span className="text-neutral-400">{connected ? 'Live Sync' : 'Reconnecting...'}</span>
-          </div>
+      {/* Main Studio Viewport */}
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Left Navigation Sidebar */}
+        <Sidebar />
 
-          <button
-            onClick={manualReload}
-            className="px-3 py-1.5 text-xs font-medium rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 transition-colors"
-          >
-            Refresh
-          </button>
-        </div>
-      </header>
+        {/* Center Interactive Canvas */}
+        <CanvasViewport>
+          {viewMode === 'single' ? (
+            <div className="flex flex-col items-center">
+              <DeviceFrame
+                imageUrl={imageUrl}
+                title={title}
+                isLoading={isLoading}
+                profileId={deviceProfile}
+                orientation={orientation}
+                themeMode={themeMode}
+              >
+                {/* Element Bounds Inspector Overlay */}
+                <InspectorOverlay containerWidth={width} containerHeight={height} />
 
-      {/* Main Canvas Area */}
-      <main className="flex-1 flex flex-col items-center justify-center p-8">
-        <DeviceFrame
-          imageUrl={imageUrl}
-          title="GreetingPreview"
-        />
+                {/* Inline Error Diagnostics Overlay */}
+                <ErrorOverlay />
+              </DeviceFrame>
+            </div>
+          ) : (
+            <MatrixGrid />
+          )}
+        </CanvasViewport>
 
-        <div className="mt-4 text-xs text-neutral-500">
-          Last updated: {lastUpdated.toLocaleTimeString()} (Updates: {refreshCount})
-        </div>
-      </main>
+        {/* Right Element Inspector Drawer */}
+        <InspectorDrawer />
+      </div>
     </div>
   );
 };
+
+export const App: React.FC = () => {
+  return (
+    <ErrorBoundary fallbackTitle="Compositor Studio Error">
+      <PreviewConfigProvider>
+        <PreviewCatalogProvider>
+          <AppContent />
+        </PreviewCatalogProvider>
+      </PreviewConfigProvider>
+    </ErrorBoundary>
+  );
+};
+
+export default App;
