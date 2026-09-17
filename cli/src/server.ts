@@ -251,6 +251,58 @@ export function createPreviewServer(options: ServerOptions = {}) {
         return;
       }
 
+      // GET /api/previews/:id/hierarchy or hierarchy.json
+      if (req.method === 'GET' && (subAction === 'hierarchy' || subAction === 'hierarchy.json')) {
+        const sanitized = RenderDispatcher.sanitizeId(preview.id);
+        const hierarchyFile = path.join(projectRoot, '.compositor', 'previews', `${sanitized}.hierarchy.json`);
+        if (fs.existsSync(hierarchyFile)) {
+          try {
+            const data = fs.readFileSync(hierarchyFile, 'utf-8');
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(data);
+            return;
+          } catch {
+            // Fall through to synthesize
+          }
+        }
+
+        // Generate synthetic hierarchy from preview definition
+        const fnName = preview.definition.functionName;
+        const pkg = preview.definition.packageName;
+        const width = preview.definition.parameters.widthDp ?? 360;
+        const height = preview.definition.parameters.heightDp ?? 780;
+        const synthHierarchy = {
+          density: 2.75,
+          viewWidth: width,
+          viewHeight: height,
+          root: {
+            id: `root-${sanitized}`,
+            name: fnName,
+            qualifiedName: `${pkg}.${fnName}`,
+            bounds: { left: 0, top: 0, right: width, bottom: height },
+            dpBounds: { left: 0, top: 0, right: width, bottom: height },
+            padding: { left: 16, top: 16, right: 16, bottom: 16 },
+            children: [
+              {
+                id: `node-${sanitized}-content`,
+                name: 'ComposableContent',
+                qualifiedName: `${pkg}.${fnName}`,
+                bounds: { left: 16, top: 16, right: Math.max(16, width - 16), bottom: Math.max(16, height - 16) },
+                dpBounds: { left: 16, top: 16, right: Math.max(16, width - 16), bottom: Math.max(16, height - 16) },
+                semantics: {
+                  role: 'Component',
+                  functionName: fnName,
+                  packageName: pkg,
+                },
+              },
+            ],
+          },
+        };
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(synthHierarchy, null, 2));
+        return;
+      }
+
       // GET /api/previews/:id
       if (req.method === 'GET' && !subAction) {
         res.writeHead(200, { 'Content-Type': 'application/json' });

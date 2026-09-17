@@ -99,6 +99,17 @@ describe('Compositor Daemon API Suite', () => {
     expect(data.previewId).toBe(discoveredPreviewId);
   });
 
+  it('GET /api/previews/:id/hierarchy returns layout hierarchy tree', async () => {
+    const encoded = encodeURIComponent(discoveredPreviewId);
+    const res = await fetch(`http://localhost:${TEST_HTTP_PORT}/api/previews/${encoded}/hierarchy`);
+    expect(res.status).toBe(200);
+
+    const data = (await res.json()) as { root: { name: string; bounds: { right: number } } };
+    expect(data.root).toBeDefined();
+    expect(data.root.name).toBe('GreetingPreview');
+    expect(data.root.bounds.right).toBeGreaterThan(0);
+  });
+
   it('connects to WebSocket server and receives broadcasts', async () => {
     const ws = new WebSocket(`ws://localhost:${TEST_WS_PORT}`);
     const receivedMessages: { event: string; payload: unknown }[] = [];

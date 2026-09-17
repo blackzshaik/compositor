@@ -31,12 +31,12 @@ Equip AI coding agents (such as Antigravity, Cursor, Claude Code, Cline) with na
 
 ## Step Progression
 
-| Step | File | Scope |
-| :--- | :--- | :--- |
-| **01** | [`step-01-mcp-server-scaffolding.md`](./step-01-mcp-server-scaffolding.md) | Initialize MCP server package with official SDK and stdio transport. |
-| **02** | [`step-02-preview-catalog-and-render-tools.md`](./step-02-preview-catalog-and-render-tools.md) | Implement `list_previews` and `render_preview` agent tools. |
-| **03** | [`step-03-vision-image-and-layout-tools.md`](./step-03-vision-image-and-layout-tools.md) | Implement `get_preview_image` (Base64) and `inspect_layout_tree` tools. |
-| **04** | [`step-04-visual-regression-diff-tool.md`](./step-04-visual-regression-diff-tool.md) | Build `compare_previews` visual regression and layout diffing tool. |
+| Step | File | Scope | Status |
+| :--- | :--- | :--- | :--- |
+| **01** | [`step-01-mcp-server-scaffolding.md`](./step-01-mcp-server-scaffolding.md) | Initialize MCP server package with official SDK and stdio transport. | 🟢 Complete |
+| **02** | [`step-02-preview-catalog-and-render-tools.md`](./step-02-preview-catalog-and-render-tools.md) | Implement `list_previews` and `render_preview` agent tools. | 🟢 Complete |
+| **03** | [`step-03-vision-image-and-layout-tools.md`](./step-03-vision-image-and-layout-tools.md) | Implement `get_preview_image` (Base64) and `inspect_layout_tree` tools. | 🟢 Complete |
+| **04** | [`step-04-visual-regression-diff-tool.md`](./step-04-visual-regression-diff-tool.md) | Build `compare_previews` visual regression and layout diffing tool. | 🟢 Complete |
 
 ---
 
