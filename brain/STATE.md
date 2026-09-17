@@ -1,7 +1,7 @@
 # Living Project State
 
 *Last Updated*: September 2026  
-*Current Phase*: **Phase 3 Complete (AI Vision Bridge MCP Verified) -> Ready for Phase 4: IDE Extensions**
+*Current Phase*: **Phase 4 Complete (IDE Extensions & Plugin Ecosystem for VS Code / Cursor Verified)**
 
 ---
 
@@ -14,13 +14,13 @@
 | **Architecture & Standards**| 🟢 Complete | `docs/ARCHITECTURE.md`, `docs/CODING_STANDARDS.md`, `docs/CONTRIBUTING.md`. |
 | **Agent Operational Rules** | 🟢 Complete | `AGENT.md` anti-slop rules, modular boundaries. |
 | **Kotlin Quality Gates**    | 🟢 Complete | Detekt `1.23.8` configured, Kover `0.9.9` configured, Gradle 8.12 LTS wrapper configured. |
-| **TypeScript Quality Gates** | 🟢 Complete | ESLint 9+ (`@typescript-eslint`), Prettier, Vitest with `@vitest/coverage-v8` in `web-viewer/` & `mcp-server/`. |
+| **TypeScript Quality Gates** | 🟢 Complete | ESLint 9+ (`@typescript-eslint`), Prettier, Vitest with `@vitest/coverage-v8` in `web-viewer/`, `mcp-server/`, and `vscode-extension/`. |
 | **Agent Brain (`brain/`)**   | 🟢 Complete | ADRs, post-mortems, and roadmap micro-implementation specs. |
 | **Tracer Bullet E2E Spike**  | 🟢 Complete | Verified end-to-end (Composable -> LayoutLib -> Daemon -> Web Viewer). |
 | **Phase 1: Auto-Watch Daemon & Engine** | 🟢 Complete | All 5 steps implemented and verified with 24 passing tests. |
 | **Phase 2: Production Web Viewer**      | 🟢 Complete | All 6 steps implemented and verified with 36 passing tests (90%+ coverage). |
 | **Phase 3: AI Vision Bridge (MCP)**     | 🟢 Complete | All 4 steps implemented and verified with 18 passing tests + stdio smoke test. |
-| **Phase 4: IDE Extensions (VS Code)**   | 🟡 Ready for Dev | Detailed specs in `brain/phase-4-ide-extensions/`. |
+| **Phase 4: IDE Extensions (VS Code / Cursor)** | 🟢 Complete | All 4 steps implemented and verified with 23 passing tests (esbuild bundled). |
 
 ---
 
@@ -67,12 +67,12 @@ Master Orchestrator: [`brain/phase-3-ai-agent-vision-bridge/INDEX.md`](./phase-3
 - [x] Step 03: Multimodal Vision & Layout Inspection Tools (`get_preview_image`, `inspect_layout_tree`)
 - [x] Step 04: Visual Regression & Layout Diffing Tool (`compare_previews`)
 
-### 5. Phase 4: IDE Extensions & Plugin Ecosystem (VS Code / Cursor) — [ACTIVE ◀]
+### 5. Phase 4: IDE Extensions & Plugin Ecosystem (VS Code / Cursor) — [COMPLETE ✅]
 Master Orchestrator: [`brain/phase-4-ide-extensions/INDEX.md`](./phase-4-ide-extensions/INDEX.md)
-- [ ] Step 01: VS Code Extension Scaffolding ◀ **NEXT STEP**
-- [ ] Step 02: Sidebar Webview Panel Integration
-- [ ] Step 03: Command Palette & Status Bar Integration
-- [ ] Step 04: Workspace Auto-Detection & Daemon Lifecycle
+- [x] Step 01: VS Code Extension Scaffolding
+- [x] Step 02: Sidebar Webview Panel Integration
+- [x] Step 03: Command Palette & Status Bar Integration
+- [x] Step 04: Workspace Auto-Detection & Daemon Lifecycle
 
 ---
 

@@ -1,0 +1,178 @@
+{
+  "name": "compositor-vscode",
+  "displayName": "Compositor Preview",
+  "description": "Headless Jetpack Compose live preview & inspector inside VS Code & Cursor",
+  "version": "0.1.0",
+  "publisher": "compositor",
+  "icon": "resources/compositor-icon.svg",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Visualization",
+    "Other"
+  ],
+  "keywords": [
+    "compose",
+    "jetpack compose",
+    "android",
+    "preview",
+    "layoutlib"
+  ],
+  "activationEvents": [
+    "onLanguage:kotlin",
+    "workspaceContains:**/build.gradle.kts",
+    "workspaceContains:**/settings.gradle.kts",
+    "onCommand:compositor.openPreviewToSide",
+    "onCommand:compositor.focusSidebar",
+    "onCommand:compositor.rerenderActivePreview",
+    "onCommand:compositor.restartDaemon"
+  ],
+  "main": "./dist/extension.js",
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "node esbuild.config.mjs",
+    "watch": "node esbuild.config.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "lint:fix": "eslint \"src/**/*.{ts,tsx}\" --fix",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "compositor-sidebar",
+          "title": "Compositor Preview",
+          "icon": "resources/compositor-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "compositor-sidebar": [
+        {
+          "type": "webview",
+          "id": "compositor.previewView",
+          "name": "Preview Canvas"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "compositor.openPreviewToSide",
+        "title": "Compositor: Open Preview to the Side",
+        "icon": "$(split-horizontal)",
+        "category": "Compositor"
+      },
+      {
+        "command": "compositor.focusSidebar",
+        "title": "Compositor: Focus Preview Sidebar",
+        "icon": "$(layout-sidebar-left)",
+        "category": "Compositor"
+      },
+      {
+        "command": "compositor.rerenderActivePreview",
+        "title": "Compositor: Re-render Active Preview",
+        "icon": "$(refresh)",
+        "category": "Compositor"
+      },
+      {
+        "command": "compositor.toggleTheme",
+        "title": "Compositor: Toggle Preview Theme (Light/Dark)",
+        "category": "Compositor"
+      },
+      {
+        "command": "compositor.startDaemon",
+        "title": "Compositor: Start Daemon",
+        "category": "Compositor"
+      },
+      {
+        "command": "compositor.stopDaemon",
+        "title": "Compositor: Stop Daemon",
+        "category": "Compositor"
+      },
+      {
+        "command": "compositor.restartDaemon",
+        "title": "Compositor: Restart Daemon",
+        "category": "Compositor"
+      },
+      {
+        "command": "compositor.showQuickMenu",
+        "title": "Compositor: Show Actions Menu",
+        "category": "Compositor"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "compositor.openPreviewToSide",
+          "when": "resourceExtname == .kt",
+          "group": "navigation"
+        },
+        {
+          "command": "compositor.rerenderActivePreview",
+          "when": "resourceExtname == .kt",
+          "group": "navigation"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "compositor.rerenderActivePreview",
+          "when": "view == compositor.previewView",
+          "group": "navigation"
+        },
+        {
+          "command": "compositor.toggleTheme",
+          "when": "view == compositor.previewView",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Compositor",
+      "properties": {
+        "compositor.autoStartDaemon": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically start the Compositor preview daemon when an Android project is opened."
+        },
+        "compositor.serverPort": {
+          "type": "integer",
+          "default": 3001,
+          "description": "HTTP port for the Compositor preview server."
+        },
+        "compositor.wsPort": {
+          "type": "integer",
+          "default": 3002,
+          "description": "WebSocket port for real-time preview sync."
+        },
+        "compositor.jdkPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to JDK 21 (overrides JAVA_HOME and system defaults)."
+        },
+        "compositor.androidSdkPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to Android SDK (overrides ANDROID_HOME and local.properties)."
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/vscode": "^1.90.0",
+    "@types/ws": "^8.5.14",
+    "@typescript-eslint/eslint-plugin": "^8.24.0",
+    "@typescript-eslint/parser": "^8.24.0",
+    "esbuild": "^0.25.0",
+    "eslint": "^9.20.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  }
+}

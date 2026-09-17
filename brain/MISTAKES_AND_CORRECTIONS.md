@@ -112,4 +112,23 @@ This document serves as an institutional memory log of engineering pitfalls, pla
   1. Always install and configure `@tailwindcss/vite` in `vite.config.ts`.
   2. Configure `/api` proxy in `vite.config.ts` targeting `http://localhost:3001` and use `resolvePreviewUrl()` to guarantee preview bitmaps always resolve to the active daemon host.
 
+---
 
+### Entry 009: IDE Background Gradle Sync Fails on Missing `androidTest` Annotation Processors
+* **Date**: September 2026
+* **Category**: Android Gradle Plugin (AGP) / IDE Tooling
+* **Symptom**:
+  When launching the project in VS Code or Cursor, Gradle sync or build fails with:
+  `java.io.FileNotFoundException: ...\build\intermediates\annotation_processor_list\debugAndroidTest\javaPreCompileDebugAndroidTest\annotationProcessors.json`.
+* **Root Cause**:
+  VS Code's Gradle/Android/Kotlin language extensions automatically query and build all project test variants including `androidTest` (device instrumented tests). Because Compositor is a headless host-JVM preview engine that only uses unit tests (`debugUnitTest`), the sample app contains no `androidTest/` sources. AGP's `javaPreCompileDebugAndroidTest` task is never triggered by default build tasks, causing AGP to crash when looking for the missing intermediate JSON file.
+* **Correction & Prevention**:
+  Explicitly disable the `androidTest` variant component in `samples/sample-app/build.gradle.kts`:
+  ```kotlin
+  androidComponents {
+      beforeVariants { variantBuilder ->
+          variantBuilder.androidTest.enable = false
+      }
+  }
+  ```
+  And run `./gradlew assembleDebug assembleDebugUnitTest` to pre-generate all required compiler intermediates.

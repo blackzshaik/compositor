@@ -60,3 +60,21 @@ This document records the foundational architectural decisions made in Composito
 * **Consequences**:
   - Automated verification of code quality before commits or PRs.
   - Breathing room provided during initial bootstrap: checks are runnable on demand via Gradle and npm scripts before being locked into hard git pre-commit hooks.
+
+---
+
+## ADR-004: IDE Extension Architecture & Webview IPC Protocol
+
+* **Date**: September 2026
+* **Status**: Accepted
+* **Context**:
+  Compose developers require preview visual feedback inside VS Code and Cursor without context switching to an external browser window.
+* **Decision**:
+  - Implement a dedicated `vscode-extension` package targeting VS Code `^1.90.0`.
+  - Embed the built `web-viewer/dist` inside a `vscode.WebviewViewProvider` (sidebar) and `vscode.WebviewPanel` (editor tab) using strict Content-Security-Policy (CSP) with local resource URI rewriting (`webview.asWebviewUri`).
+  - Implement zero-overhead lazy activation (`onLanguage:kotlin`, `workspaceContains:**/build.gradle.kts`).
+  - Provide cursor-to-composable resolution (`resolvePreviewAtCursor`) to enable 1-click targeted re-rendering directly from editor caret positions.
+* **Consequences**:
+  - Zero-lag inline previews in VS Code & Cursor.
+  - Full isolation: daemon runs independently on local ports 3001/3002 with output streamed to VS Code Output Channel.
+

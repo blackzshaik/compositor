@@ -27,6 +27,12 @@ android {
     }
 }
 
+androidComponents {
+    beforeVariants { variantBuilder ->
+        variantBuilder.androidTest.enable = false
+    }
+}
+
 dependencies {
     val composeBom = platform(libs.compose.bom)
     implementation(composeBom)
