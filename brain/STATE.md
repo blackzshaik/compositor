@@ -17,8 +17,8 @@
 | **TypeScript Quality Gates** | 🟢 Complete | ESLint 9+ (`@typescript-eslint`), Prettier, Vitest with `@vitest/coverage-v8` in `web-viewer/`. |
 | **Agent Brain (`brain/`)**   | 🟢 Complete | ADRs, post-mortems, and roadmap micro-implementation specs. |
 | **Tracer Bullet E2E Spike**  | 🟢 Complete | Verified end-to-end (Composable -> LayoutLib -> Daemon -> Web Viewer). |
-| **Phase 1: Auto-Watch Daemon & Engine** | 🟡 Ready for Dev | Detailed specs in `brain/phase-1-daemon-and-engine/`. |
-| **Phase 2: Production Web Viewer**      | ⚪ Planned | Detailed specs in `brain/phase-2-web-viewer-inspector/`. |
+| **Phase 1: Auto-Watch Daemon & Engine** | 🟢 Complete | All 5 steps implemented and verified with 23 passing tests. |
+| **Phase 2: Production Web Viewer**      | 🟡 Ready for Dev | Detailed specs in `brain/phase-2-web-viewer-inspector/`. |
 | **Phase 3: AI Vision Bridge (MCP)**     | ⚪ Planned | Detailed specs in `brain/phase-3-ai-agent-vision-bridge/`. |
 | **Phase 4: IDE Extensions (VS Code)**   | ⚪ Planned | Detailed specs in `brain/phase-4-ide-extensions/`. |
 
@@ -43,17 +43,17 @@ Master Orchestrator: [`brain/tracer-bullet-initial-implementation/INDEX.md`](./t
 - [x] Step 04: Web Canvas Display & Live Device Mockup
 - [x] Step 05: E2E Verification & Latency Benchmark
 
-### 2. Phase 1: Real-Time Auto-Watch Daemon & Incremental Engine — [ACTIVE ◀]
+### 2. Phase 1: Real-Time Auto-Watch Daemon & Incremental Engine — [COMPLETE ✅]
 Master Orchestrator: [`brain/phase-1-daemon-and-engine/INDEX.md`](./phase-1-daemon-and-engine/INDEX.md)
-- [ ] Step 01: [`step-01-preview-ast-parser.md`](./phase-1-daemon-and-engine/step-01-preview-ast-parser.md) ◀ **NEXT STEP**
-- [ ] Step 02: [`step-02-preview-index-model.md`](./phase-1-daemon-and-engine/step-02-preview-index-model.md)
-- [ ] Step 03: [`step-03-file-watcher-daemon.md`](./phase-1-daemon-and-engine/step-03-file-watcher-daemon.md)
-- [ ] Step 04: [`step-04-incremental-render-pipeline.md`](./phase-1-daemon-and-engine/step-04-incremental-render-pipeline.md)
-- [ ] Step 05: [`step-05-daemon-rest-api.md`](./phase-1-daemon-and-engine/step-05-daemon-rest-api.md)
+- [x] Step 01: [`step-01-preview-ast-parser.md`](./phase-1-daemon-and-engine/step-01-preview-ast-parser.md)
+- [x] Step 02: [`step-02-preview-index-model.md`](./phase-1-daemon-and-engine/step-02-preview-index-model.md)
+- [x] Step 03: [`step-03-file-watcher-daemon.md`](./phase-1-daemon-and-engine/step-03-file-watcher-daemon.md)
+- [x] Step 04: [`step-04-incremental-render-pipeline.md`](./phase-1-daemon-and-engine/step-04-incremental-render-pipeline.md)
+- [x] Step 05: [`step-05-daemon-rest-api.md`](./phase-1-daemon-and-engine/step-05-daemon-rest-api.md)
 
-### 3. Phase 2: Production Web Viewer & Interactive Canvas — [PLANNED ⚪]
+### 3. Phase 2: Production Web Viewer & Interactive Canvas — [ACTIVE ◀]
 Master Orchestrator: [`brain/phase-2-web-viewer-inspector/INDEX.md`](./phase-2-web-viewer-inspector/INDEX.md)
-- [ ] Step 01: Multi-Module Preview Sidebar & Search
+- [ ] Step 01: Multi-Module Preview Sidebar & Search ◀ **NEXT STEP**
 - [ ] Step 02: Multi-Device Bezel Mockups & Form Factors
 - [ ] Step 03: Theme, Typography & Orientation Controls
 - [ ] Step 04: Multi-Preview Matrix & Side-by-Side Comparison

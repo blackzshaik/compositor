@@ -84,3 +84,17 @@ This document serves as an institutional memory log of engineering pitfalls, pla
 * **Correction & Prevention**:
   Anchor Gradle wrapper strictly to Gradle 8.12 LTS in `gradle/wrapper/gradle-wrapper.properties`:
   `distributionUrl=https\://services.gradle.org/distributions/gradle-8.12-bin.zip`.
+
+---
+
+### Entry 007: Child Process Launcher JVM Inherits Host JDK 26 Instead of JDK 21
+* **Date**: September 2026
+* **Category**: Process Environment / Windows / JVM Tooling
+* **Symptom**:
+  Render dispatcher executions failed with `What went wrong: 26.0.1` inside `errorDetails`.
+* **Root Cause**:
+  `render-dispatcher.ts` used `process.env.JAVA_HOME || 'C:\\Program Files\\Android\\openjdk\\jdk-21.0.8'`. Because the user's system environment had `JAVA_HOME=C:\Program Files\Java\jdk-26.0.1`, the fallback was never evaluated. The Gradle client launcher ran with JDK 26, failing AGP's Java compatibility check before the Gradle daemon could take over.
+* **Correction & Prevention**:
+  1. Add `org.gradle.java.home=C:/Program Files/Android/openjdk/jdk-21.0.8` to `gradle.properties`.
+  2. In `render-dispatcher.ts`, explicitly resolve and prioritize JDK 21 over system environment, and prepend JDK 21's `bin` directory to `PATH` in the spawned child process environment.
+

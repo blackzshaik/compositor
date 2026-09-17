@@ -1,8 +1,8 @@
 # Step 04: Incremental Render Pipeline & Dispatcher
 
 *Phase*: 1 — Auto-Watch Daemon & Incremental Engine  
-*Status*: Blocked by Step 03  
-*Target Module*: `cli` / `core-renderer`
+*Status*: Complete ✅  
+*Target Module*: `cli`
 
 ---
 
