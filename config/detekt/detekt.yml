@@ -16,7 +16,11 @@ complexity:
     constructorThreshold: 7
   TooManyFunctions:
     active: true
-    threshold: 25
+    thresholdInFiles: 25
+    thresholdInClasses: 25
+    thresholdInInterfaces: 25
+    thresholdInObjects: 25
+    thresholdInEnums: 25
 
 empty-blocks:
   active: true

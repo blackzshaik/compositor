@@ -51,3 +51,32 @@ tasks.register<Copy>("exportLatestPreview") {
     into(rootProject.layout.projectDirectory.dir(".compositor"))
     rename { "latest_preview.png" }
 }
+
+tasks.register("exportDebugClasspath") {
+    dependsOn("compileDebugKotlin", "processDebugResources")
+    val runtimeClasspath = configurations.named("debugRuntimeClasspath")
+    val outputDir = layout.buildDirectory.dir("compositor/extracted-jars")
+    outputs.dir(outputDir)
+    doLast {
+        val artifactView = runtimeClasspath.get().incoming.artifactView {
+            attributes {
+                attribute(
+                    org.gradle.api.attributes.Attribute.of("artifactType", String::class.java),
+                    "android-classes-jar"
+                )
+            }
+        }
+        val targetDir = outputDir.get().asFile
+        targetDir.mkdirs()
+        artifactView.artifacts.artifactFiles.files.forEachIndexed { index, file ->
+            val destName = "${index}_${file.name}"
+            file.copyTo(File(targetDir, destName), overwrite = true)
+        }
+        val rJar = layout.buildDirectory.file(
+            "intermediates/compile_and_runtime_not_namespaced_r_class_jar/debug/processDebugResources/R.jar"
+        ).get().asFile
+        if (rJar.exists()) {
+            rJar.copyTo(File(targetDir, "R.jar"), overwrite = true)
+        }
+    }
+}

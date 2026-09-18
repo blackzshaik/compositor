@@ -132,3 +132,42 @@ This document serves as an institutional memory log of engineering pitfalls, pla
   }
   ```
   And run `./gradlew assembleDebug assembleDebugUnitTest` to pre-generate all required compiler intermediates.
+
+---
+
+### Entry 010: PaparazziSdk Static State Poisoning and Teardown Timing
+* **Date**: September 2026
+* **Category**: Headless LayoutLib / Paparazzi Integration
+* **Symptom**:
+  1. `UninitializedPropertyAccessException: lateinit property sessionParamsBuilder has not been initialized` when
+     subsequent renders occurred after an earlier failure or render.
+  2. `AssertionFailedError: Root bounds should be captured ==> expected: not <null>` when extracting ViewInfo
+     from `bridgeRenderSession` after `sdk.teardown()`.
+* **Root Cause**:
+  1. `PaparazziSdk` stores `renderer` and `sessionParamsBuilder` in companion object static fields. If preparation
+     fails mid-way or is invoked repeatedly across requests, `PaparazziSdk` assumes it was already initialized
+     while `sessionParamsBuilder` remains uninitialized.
+  2. Calling `sdk.teardown()` releases and disposes `bridgeRenderSession` (`session.dispose()`), clearing
+     all root views before `extractRootBounds()` can inspect them.
+* **Correction & Prevention**:
+  1. Always invoke `resetSdkState()` via reflection to reset `renderer` and `sessionParamsBuilder` to null
+     before and after rendering sessions.
+  2. Extract `rootBounds` from `sdk` inside the `try` block immediately after `snapshotMethod.invoke(...)`
+     and strictly before `sdk.teardown()` is executed in the `finally` block.
+
+---
+
+### Entry 011: Standalone JVM Engine Requires Android SDK Platform JAR and Compose Dependencies
+* **Date**: September 2026
+* **Category**: Headless Rendering / ClassLoading
+* **Symptom**:
+  1. `ClassNotFoundException: android.os.Build$VERSION` during `ComposeView` composition in pure JVM test tasks.
+  2. `NoClassDefFoundError: androidx.compose.ui.platform.ComposeView` when `PaparazziSdk.snapshot(...)` is invoked.
+* **Root Cause**:
+  `core-renderer` is a pure Kotlin JVM library without AGP dependencies. While `layoutlib-runtime` provides native
+  binaries and resources, Android framework classes (like `android.os.Build`) reside in `android.jar`, and Compose
+  classes reside inside AAR bundles compiled by Android application modules.
+* **Correction & Prevention**:
+  1. Include `platforms/android-35/android.jar` on the runtime classpath of tests or the daemon engine.
+  2. Export and extract AAR classes from the target Android application (via `exportDebugClasspath` task) and
+     wire the resulting JARs into the classpath so that `ComposeView` and its dispatcher dependencies resolve.
