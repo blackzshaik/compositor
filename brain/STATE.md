@@ -14,13 +14,13 @@
 | **Architecture & Standards**| 🟢 Complete | `docs/ARCHITECTURE.md`, `docs/CODING_STANDARDS.md`, `docs/CONTRIBUTING.md`. |
 | **Agent Operational Rules** | 🟢 Complete | `AGENT.md` anti-slop rules, modular boundaries. |
 | **Kotlin Quality Gates**    | 🟢 Complete | Detekt `1.23.8` configured, Kover `0.9.9` configured, Gradle 8.12 LTS wrapper configured. |
-| **TypeScript Quality Gates** | 🟢 Complete | ESLint 9+ (`@typescript-eslint`), Prettier, Vitest with `@vitest/coverage-v8` in `web-viewer/`, `mcp-server/`, and `vscode-extension/`. |
-| **Agent Brain (`brain/`)**   | 🟢 Complete | ADRs, post-mortems, and roadmap micro-implementation specs. |
-| **Tracer Bullet E2E Spike**  | 🟢 Complete | Verified end-to-end (Composable -> LayoutLib -> Daemon -> Web Viewer). |
-| **Phase 1: Auto-Watch Daemon & Engine** | 🟢 Complete | All 5 steps implemented and verified with 24 passing tests. |
-| **Phase 2: Production Web Viewer**      | 🟢 Complete | All 6 steps implemented and verified with 36 passing tests (90%+ coverage). |
-| **Phase 3: AI Vision Bridge (MCP)**     | 🟢 Complete | All 4 steps implemented and verified with 18 passing tests + stdio smoke test. |
-| **Phase 4: IDE Extensions (VS Code / Cursor)** | 🟢 Complete | All 4 steps implemented and verified with 23 passing tests (esbuild bundled). |
+| **Agent Brain (`brain/`)**   | 🟢 Complete | ADRs (ADR-001 through ADR-007), post-mortems, and roadmap specs. |
+| **Tracer Bullet Spike**      | 🟢 Evaluated | Proved JVM rendering and web canvas feasibility; identified need to replace Paparazzi and Node.js. |
+| **Phase 1: Native LayoutLib & Ktor Daemon** | 🟡 Ready for Dev | Core JVM engine in `core-renderer` & Ktor daemon. **ACTIVE TRACK**. |
+| **Phase 2: Production Web Viewer**          | ⚪ Ready for Bundling | React/Tailwind canvas to be embedded into JAR static resources. |
+| **Phase 3: Shippable Gradle Plugin**        | ⚪ Ready for Dev | Standalone plugin `id("io.compositor")` for any external Android app. |
+| **Phase 4: Embedded Kotlin MCP Server**     | ⚪ Planned | Official JetBrains Kotlin MCP SDK embedded in Ktor daemon. |
+| **Phase 5: IDE Extensions (VS Code/Cursor)**| ⚪ Planned | Sidebar panel & command palette integration. |
 
 ---
 
@@ -28,57 +28,41 @@
 
 * **JDK 21**: `C:\Program Files\Android\openjdk\jdk-21.0.8` (required for AGP & Gradle)
 * **Android SDK**: `C:\Users\jahab\AppData\Local\Android\Sdk`
-* **Node.js**: v24.16.0 LTS with npm 11.13.0
 * **Gradle Wrapper**: 8.12 LTS (`gradlew.bat`)
 
 ---
 
-## 🎯 Active Execution Tracks in Brain
+## 🎯 Active Execution Plan: Pure-Kotlin Headless Compositor
 
-### 1. Tracer Bullet (Thin Vertical Slice) — [COMPLETE ✅]
-Master Orchestrator: [`brain/tracer-bullet-initial-implementation/INDEX.md`](./tracer-bullet-initial-implementation/INDEX.md)
-- [x] Step 01: Minimal Compose App with `GreetingPreview`
-- [x] Step 02: Headless LayoutLib JVM Render Spike
-- [x] Step 03: Local Preview Server (HTTP & WS)
-- [x] Step 04: Web Canvas Display & Live Device Mockup
-- [x] Step 05: E2E Verification & Latency Benchmark
-
-### 2. Phase 1: Real-Time Auto-Watch Daemon & Incremental Engine — [COMPLETE ✅]
+### Phase 1: Native LayoutLib Engine & Pure-Kotlin Ktor Daemon — [ACTIVE ◀]
 Master Orchestrator: [`brain/phase-1-daemon-and-engine/INDEX.md`](./phase-1-daemon-and-engine/INDEX.md)
-- [x] Step 01: [`step-01-preview-ast-parser.md`](./phase-1-daemon-and-engine/step-01-preview-ast-parser.md)
-- [x] Step 02: [`step-02-preview-index-model.md`](./phase-1-daemon-and-engine/step-02-preview-index-model.md)
-- [x] Step 03: [`step-03-file-watcher-daemon.md`](./phase-1-daemon-and-engine/step-03-file-watcher-daemon.md)
-- [x] Step 04: [`step-04-incremental-render-pipeline.md`](./phase-1-daemon-and-engine/step-04-incremental-render-pipeline.md)
-- [x] Step 05: [`step-05-daemon-rest-api.md`](./phase-1-daemon-and-engine/step-05-daemon-rest-api.md)
+- [ ] **Step 01**: [`step-01-layoutlib-headless-engine.md`](./phase-1-daemon-and-engine/step-01-layoutlib-headless-engine.md) ◀ **CURRENT ACTIVE STEP**
+- [ ] **Step 02**: [`step-02-kotlin-psi-preview-parser.md`](./phase-1-daemon-and-engine/step-02-kotlin-psi-preview-parser.md)
+- [ ] **Step 03**: [`step-03-ktor-preview-daemon.md`](./phase-1-daemon-and-engine/step-03-ktor-preview-daemon.md)
+- [ ] **Step 04**: [`step-04-kotlin-file-watcher.md`](./phase-1-daemon-and-engine/step-04-kotlin-file-watcher.md)
+- [ ] **Step 05**: [`step-05-e2e-pure-kotlin-pipeline.md`](./phase-1-daemon-and-engine/step-05-e2e-pure-kotlin-pipeline.md)
 
-### 3. Phase 2: Production Web Viewer & Interactive Canvas — [COMPLETE ✅]
+### Phase 2: Production Web Viewer & Inspector Canvas — [PLANNED ⚪]
 Master Orchestrator: [`brain/phase-2-web-viewer-inspector/INDEX.md`](./phase-2-web-viewer-inspector/INDEX.md)
-- [x] Step 01: Multi-Module Preview Sidebar & Search
-- [x] Step 02: Multi-Device Bezel Mockups & Form Factors
-- [x] Step 03: Theme, Typography & Orientation Controls
-- [x] Step 04: Multi-Preview Matrix & Side-by-Side Comparison
-- [x] Step 05: Element Bounds & Semantic Inspector Overlay
-- [x] Step 06: Error Diagnostics & Resilient Error Boundary
 
-### 4. Phase 3: AI Agent Vision Bridge (Model Context Protocol - MCP) — [COMPLETE ✅]
-Master Orchestrator: [`brain/phase-3-ai-agent-vision-bridge/INDEX.md`](./phase-3-ai-agent-vision-bridge/INDEX.md)
-- [x] Step 01: MCP Server Initialization & Transport
-- [x] Step 02: Preview Catalog & Execution Tools (`list_previews`, `render_preview`)
-- [x] Step 03: Multimodal Vision & Layout Inspection Tools (`get_preview_image`, `inspect_layout_tree`)
-- [x] Step 04: Visual Regression & Layout Diffing Tool (`compare_previews`)
+### Phase 3: Shippable Compositor Gradle Plugin (`io.compositor`) — [PLANNED ⚪]
+Master Orchestrator: [`brain/phase-3-shippable-gradle-plugin/INDEX.md`](./phase-3-shippable-gradle-plugin/INDEX.md)
+- [ ] Step 01: Gradle Plugin Scaffolding & Configuration
+- [ ] Step 02: AGP Classpath & Android Resource Resolution
+- [ ] Step 03: Compositor Gradle Tasks Registration (`./gradlew compositor`)
+- [ ] Step 04: External Project Verification & Standalone Shipping
 
-### 5. Phase 4: IDE Extensions & Plugin Ecosystem (VS Code / Cursor) — [COMPLETE ✅]
-Master Orchestrator: [`brain/phase-4-ide-extensions/INDEX.md`](./phase-4-ide-extensions/INDEX.md)
-- [x] Step 01: VS Code Extension Scaffolding
-- [x] Step 02: Sidebar Webview Panel Integration
-- [x] Step 03: Command Palette & Status Bar Integration
-- [x] Step 04: Workspace Auto-Detection & Daemon Lifecycle
+### Phase 4: Embedded Kotlin MCP Server for AI Agents — [PLANNED ⚪]
+Master Orchestrator: [`brain/phase-4-ai-agent-vision-bridge/INDEX.md`](./phase-4-ai-agent-vision-bridge/INDEX.md)
+
+### Phase 5: IDE Extensions (VS Code / Cursor) — [PLANNED ⚪]
+Master Orchestrator: [`brain/phase-5-ide-extensions/INDEX.md`](./phase-5-ide-extensions/INDEX.md)
 
 ---
 
-## 🤖 AI Agent Command Triggers
-To advance any track in a fresh session, prompt the AI agent with:
-* `Build from brain: phase-1-step-01` (or `Build from brain: phase-1`)
-* `Build from brain: phase-2`
-* `Build from brain: phase-3`
-* `Build from brain: phase-4`
+## 🤖 AI Agent Command Trigger
+To advance implementation in a fresh session, instruct the AI agent:
+```
+Build from brain: phase-1-step-01
+```
+The agent will read `step-01-layoutlib-headless-engine.md`, implement the native LayoutLib bridge in `core-renderer`, verify with tests, and advance state.

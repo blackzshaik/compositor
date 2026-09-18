@@ -1,4 +1,4 @@
-# Phase 4: IDE Extensions & Plugin Ecosystem (VS Code / Cursor)
+# Phase 5: IDE Extensions & Plugin Ecosystem (VS Code / Cursor)
 
 ## Mission
 Bring Compositor directly into the developer's primary IDE environment (VS Code and Cursor). By embedding the Web Viewer inside an interactive sidebar panel and providing command palette integration, developers can preview Compose UI side-by-side with their editor without opening an external browser window.

@@ -1,7 +1,7 @@
-# Phase 3: AI Agent Vision Bridge (Model Context Protocol - MCP)
+# Phase 4: AI Agent Vision Bridge (Model Context Protocol - MCP)
 
 ## Mission
-Equip AI coding agents (such as Antigravity, Cursor, Claude Code, Cline) with native visual capabilities for Jetpack Compose. By implementing an official Model Context Protocol (MCP) server, agents can discover available previews, trigger targeted renders, inspect base64 bitmaps with vision models, retrieve semantic layout trees, and verify visual diffs.
+Equip AI coding agents (such as Antigravity, Cursor, Claude Code, Cline) with native visual capabilities for Jetpack Compose. Using the official Kotlin MCP SDK embedded directly within the Ktor daemon, agents can discover available previews, trigger targeted renders, inspect base64 bitmaps with vision models, retrieve semantic layout trees, and verify visual diffs without running external server processes.
 
 ---
 
@@ -13,14 +13,14 @@ Equip AI coding agents (such as Antigravity, Cursor, Claude Code, Cline) with na
                            │ (MCP Protocol via stdio / SSE)
                            ▼
 ┌────────────────────────────────────────────────────────┐
-│ Compositor MCP Server (mcp-server/)                    │
+│ Compositor Ktor Daemon (Embedded Kotlin MCP Server)    │
 │  ├── Tool: list_previews()                             │
 │  ├── Tool: render_preview(name, overrides?)            │
 │  ├── Tool: get_preview_image(name) [Base64 PNG]        │
 │  ├── Tool: inspect_layout_tree(name) [Bounds & Semantics]
 │  └── Tool: compare_previews(before, after) [Diff Overlay]
 └──────────────────────────┬─────────────────────────────┘
-                           │ (REST / IPC)
+                           │ (In-Process Coroutines)
                            ▼
 ┌────────────────────────────────────────────────────────┐
 │ Compositor Daemon & Engine (cli/ & core-renderer/)     │

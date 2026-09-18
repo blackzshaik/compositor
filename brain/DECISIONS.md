@@ -78,3 +78,52 @@ This document records the foundational architectural decisions made in Composito
   - Zero-lag inline previews in VS Code & Cursor.
   - Full isolation: daemon runs independently on local ports 3001/3002 with output streamed to VS Code Output Channel.
 
+---
+
+## ADR-005: Decoupling from Paparazzi Spike to Native LayoutLib Engine
+
+* **Date**: September 2026
+* **Status**: Accepted
+* **Context**:
+  The initial Tracer Bullet used Cash App's Paparazzi as a quick spike to verify JVM rendering. However, Paparazzi is fundamentally a screenshot testing tool that requires developers to write JUnit test classes (`@Test fun snapshot()`) for every preview. A true developer preview tool must render `@Preview` composables directly from main source code with zero test boilerplate.
+* **Decision**:
+  Implement a dedicated, headless LayoutLib rendering engine in `core-renderer` that directly interfaces with Android's LayoutLib and Compose runtime via reflection, bypassing JUnit and test harnesses entirely.
+* **Consequences**:
+  - Developers write standard `@Preview` composables in regular source files without any test code.
+  - Direct in-memory rendering session management with sub-second render times.
+
+---
+
+## ADR-006: Pure Kotlin Architecture (Ktor + Kotlin PSI + Zero-Node End User Runtime)
+
+* **Date**: September 2026
+* **Status**: Accepted
+* **Context**:
+  The tracer bullet daemon was written in TypeScript/Node.js. This required Android developers to install Node.js and npm in addition to JDK 21 and the Android SDK, creating unnecessary onboarding friction and separating the tooling from the native Android language.
+* **Decision**:
+  Re-architect the entire daemon, CLI, and AST parsing in **pure Kotlin**:
+  - **Ktor**: Lightweight, coroutine-native HTTP and WebSocket server for daemon IPC.
+  - **Clikt**: Idiomatic Kotlin CLI parser for command-line arguments.
+  - **Kotlin Compiler Embedded PSI**: Native AST parsing of `.kt` source files to extract `@Preview` metadata without running full Gradle builds.
+  - **Pre-compiled Web Viewer**: The React/Tailwind web viewer is built and bundled directly as static assets inside the JAR/plugin resources. The end user needs **zero Node.js/npm runtime**.
+* **Consequences**:
+  - Single runtime dependency for users: JDK 21 (which all Android developers already have).
+  - Native coroutine concurrency and seamless code sharing across renderer and daemon.
+
+---
+
+## ADR-007: Shippable Entity via Compositor Gradle Plugin (`io.compositor`)
+
+* **Date**: September 2026
+* **Status**: Accepted
+* **Context**:
+  Compositor cannot remain confined to an internal sample submodule. It must be a standalone, shippable tool that any developer can easily apply to their existing external Android app on any machine.
+* **Decision**:
+  Package Compositor as a standard Android Gradle Plugin (`id("io.compositor")`):
+  - Integrates natively with the Android Gradle Plugin (AGP) artifact collections to automatically resolve the project's compiled classpath, merged Android resources (`res/`), and manifest.
+  - Registers clean Gradle tasks: `./gradlew compositor` (starts server and launches browser) and `./gradlew compositorRender`.
+  - Also provide a standalone CLI binary (`compositor watch`) that attaches to projects via the Gradle Tooling API.
+* **Consequences**:
+  - One-line setup for existing Android projects: `plugins { id("io.compositor") version "0.1.0" }`.
+  - Full, automatic access to Android resources (`R.string`, `R.drawable`, `R.style`), avoiding missing resource crashes in LayoutLib.
+

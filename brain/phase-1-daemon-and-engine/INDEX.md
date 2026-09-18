@@ -1,23 +1,31 @@
-# Phase 1: Real-Time Auto-Watch Daemon & Incremental Engine
+# Phase 1: Native LayoutLib Engine & Pure-Kotlin Ktor Daemon
 
 ## Mission
-Automate the discovery and execution of `@Preview` composables across the project. Replace manual Gradle snapshot tasks with a persistent background daemon that watches `.kt` files, parses preview metadata, triggers fast incremental JVM rendering, and updates an in-memory preview registry.
+Build the core engine of Compositor in **100% Kotlin (JVM)**:
+1. Replace the Paparazzi JUnit spike with a direct, headless **LayoutLib rendering engine** in `core-renderer` that renders `@Preview` composables without test classes or boilerplate.
+2. Build an embedded, lightweight **Ktor daemon** with coroutine-based file watching that serves previews over HTTP/WebSockets and bundles the web viewer static assets—requiring **zero Node.js runtime** for end users.
 
 ---
 
-## Architecture Overview
+## Architectural Workflow (Pure Kotlin)
 ```
-[ Source Files (*.kt) ]
-         │
-         ▼ (File System Watcher)
-┌──────────────────────────────────────────────────┐
-│ Compositor Daemon                                │
-│  ├── 1. File Change Filter & Debouncer           │
-│  ├── 2. Preview AST Parser (Extract Annotations) │
-│  ├── 3. Preview Index Registry (previews.json)   │
-│  ├── 4. Incremental Render Dispatcher (JVM)      │
-│  └── 5. REST & WebSocket Broadcast API          │
-└──────────────────────────────────────────────────┘
+[ User Android Source (*.kt) ]
+             │
+             ▼ (Kotlin Coroutines File Watcher)
+┌────────────────────────────────────────────────────────┐
+│ Compositor Daemon (Pure Kotlin JVM)                    │
+│  ├── 1. Kotlin Embedded PSI (AST Parser)               │
+│  │   • Extracts @Preview metadata from source files    │
+│  │                                                     │
+│  ├── 2. Native LayoutLib Engine (core-renderer)        │
+│  │   • Resolves AGP classpath & merged R.jar           │
+│  │   • In-memory RenderSession execution (no JUnit)   │
+│  │   • Emits high-res PNG in < 1.5s                    │
+│  │                                                     │
+│  └── 3. Embedded Ktor Server                           │
+│      • Serves embedded Web Viewer UI from JAR          │
+│      • Exposes REST & WebSocket preview events         │
+└────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -26,17 +34,16 @@ Automate the discovery and execution of `@Preview` composables across the projec
 
 | Step | File | Scope |
 | :--- | :--- | :--- |
-| **01** | [`step-01-preview-ast-parser.md`](./step-01-preview-ast-parser.md) | Scan Kotlin source files and extract `@Preview` declarations with their parameters. |
-| **02** | [`step-02-preview-index-model.md`](./step-02-preview-index-model.md) | Design data models and maintain `previews.json` index of all available composables. |
-| **03** | [`step-03-file-watcher-daemon.md`](./step-03-file-watcher-daemon.md) | Implement file watching, debouncing, and filtering for UI source changes. |
-| **04** | [`step-04-incremental-render-pipeline.md`](./step-04-incremental-render-pipeline.md) | Hook into the JVM snapshot engine to execute targeted single-preview renders. |
-| **05** | [`step-05-daemon-rest-api.md`](./step-05-daemon-rest-api.md) | Expose HTTP endpoints for listing previews, inspecting state, and triggering manual renders. |
+| **01** | [`step-01-layoutlib-headless-engine.md`](./step-01-layoutlib-headless-engine.md) | Decouple from Paparazzi; build direct LayoutLib in-memory JVM renderer in `core-renderer`. |
+| **02** | [`step-02-kotlin-psi-preview-parser.md`](./step-02-kotlin-psi-preview-parser.md) | Parse Kotlin `.kt` files using Kotlin Compiler Embedded PSI to extract `@Preview` metadata. |
+| **03** | [`step-03-ktor-preview-daemon.md`](./step-03-ktor-preview-daemon.md) | Implement embedded Ktor HTTP & WebSocket server, serving embedded web assets. |
+| **04** | [`step-04-kotlin-file-watcher.md`](./step-04-kotlin-file-watcher.md) | Build coroutine-based source directory watcher with debounced event dispatch. |
+| **05** | [`step-05-e2e-pure-kotlin-pipeline.md`](./step-05-e2e-pure-kotlin-pipeline.md) | Wire the pipeline end-to-end: file save -> PSI parse -> LayoutLib render -> Ktor push. |
 
 ---
 
 ## Protocol for AI Agents
 1. Inspect [`brain/STATE.md`](../STATE.md) to confirm Phase 1 is active.
-2. Read the active step markdown file.
-3. Follow the high-level instructions, respecting modular boundaries in `AGENT.md`.
-4. Run the verification strategy for the step.
-5. Update `brain/STATE.md` upon completion.
+2. Follow each step's high-level instructions strictly.
+3. Write pure Kotlin code (targeting Java 21, Kotlin 2.x). Do not introduce Node.js runtime requirements.
+4. Run Detekt (`./gradlew detekt`) and tests before completing each step.
