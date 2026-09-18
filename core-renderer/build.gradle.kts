@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.detekt)
     alias(libs.plugins.kover)
 }
@@ -19,14 +20,34 @@ val osClassifier = when {
 
 dependencies {
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlin.compiler.embeddable)
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.paparazzi)
+    implementation(libs.ktor.server.core)
+    implementation(libs.ktor.server.cio)
+    implementation(libs.ktor.server.cors)
+    implementation(libs.ktor.server.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.ktor.server.websockets)
     runtimeOnly("com.android.tools.layoutlib:layoutlib-runtime:14.0.11:$osClassifier")
 
     testImplementation(libs.junit.jupiter.api)
     testRuntimeOnly(libs.junit.jupiter.engine)
     testImplementation(libs.mockk)
+    testImplementation(libs.ktor.server.test.host)
+    testImplementation(libs.ktor.client.websockets)
+    testImplementation(libs.ktor.client.content.negotiation)
 
     detektPlugins(libs.detekt.formatting)
+}
+
+val copyWebViewer by tasks.registering(Copy::class) {
+    from(rootProject.file("web-viewer/dist"))
+    into(layout.buildDirectory.dir("resources/main/web"))
+}
+
+tasks.processResources {
+    dependsOn(copyWebViewer)
 }
 
 tasks.test {

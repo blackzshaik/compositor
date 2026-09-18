@@ -1,8 +1,8 @@
 # Step 04: Native Kotlin Coroutine Source Directory Watcher
 
 *Phase*: 1 — Native LayoutLib Engine & Pure-Kotlin Ktor Daemon  
-*Status*: Blocked by Step 03  
-*Target Module*: `cli`
+*Status*: 🟢 Completed (Verified with Unit Tests & Detekt)  
+*Target Module*: `core-renderer` (package `io.compositor.watcher`)
 
 ---
 

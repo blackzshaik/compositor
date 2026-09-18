@@ -171,3 +171,19 @@ This document serves as an institutional memory log of engineering pitfalls, pla
   1. Include `platforms/android-35/android.jar` on the runtime classpath of tests or the daemon engine.
   2. Export and extract AAR classes from the target Android application (via `exportDebugClasspath` task) and
      wire the resulting JARs into the classpath so that `ComposeView` and its dispatcher dependencies resolve.
+
+---
+
+### Entry 012: Kotlin Compiler Embeddable Relocates IntelliJ OpenAPI Packages
+* **Date**: September 2026
+* **Category**: Embedded Compiler Tooling / Classpath
+* **Symptom**:
+  `compileKotlin` failed with:
+  `Unresolved reference 'Disposer'` when importing `com.intellij.openapi.util.Disposer`.
+* **Root Cause**:
+  `org.jetbrains.kotlin:kotlin-compiler-embeddable` relocates all bundled IntelliJ IDEA OpenAPI classes
+  under `org.jetbrains.kotlin.com.intellij.*` to avoid binary collisions with IDE runtime plugins.
+* **Correction & Prevention**:
+  Always import IntelliJ utility and AST classes from `org.jetbrains.kotlin.com.intellij.*` (e.g.
+  `org.jetbrains.kotlin.com.intellij.openapi.util.Disposer`) when working in modules using
+  `kotlin-compiler-embeddable`.

@@ -32,13 +32,13 @@ Build the core engine of Compositor in **100% Kotlin (JVM)**:
 
 ## Step Progression
 
-| Step | File | Scope |
-| :--- | :--- | :--- |
-| **01** | [`step-01-layoutlib-headless-engine.md`](./step-01-layoutlib-headless-engine.md) | Decouple from Paparazzi; build direct LayoutLib in-memory JVM renderer in `core-renderer`. |
-| **02** | [`step-02-kotlin-psi-preview-parser.md`](./step-02-kotlin-psi-preview-parser.md) | Parse Kotlin `.kt` files using Kotlin Compiler Embedded PSI to extract `@Preview` metadata. |
-| **03** | [`step-03-ktor-preview-daemon.md`](./step-03-ktor-preview-daemon.md) | Implement embedded Ktor HTTP & WebSocket server, serving embedded web assets. |
-| **04** | [`step-04-kotlin-file-watcher.md`](./step-04-kotlin-file-watcher.md) | Build coroutine-based source directory watcher with debounced event dispatch. |
-| **05** | [`step-05-e2e-pure-kotlin-pipeline.md`](./step-05-e2e-pure-kotlin-pipeline.md) | Wire the pipeline end-to-end: file save -> PSI parse -> LayoutLib render -> Ktor push. |
+| Step | File | Scope | Status |
+| :--- | :--- | :--- | :--- |
+| **01** | [`step-01-layoutlib-headless-engine.md`](./step-01-layoutlib-headless-engine.md) | Decouple from Paparazzi; build direct LayoutLib in-memory JVM renderer in `core-renderer`. | 🟢 Complete |
+| **02** | [`step-02-kotlin-psi-preview-parser.md`](./step-02-kotlin-psi-preview-parser.md) | Parse Kotlin `.kt` files using Kotlin Compiler Embedded PSI to extract `@Preview` metadata. | 🟢 Complete |
+| **03** | [`step-03-ktor-preview-daemon.md`](./step-03-ktor-preview-daemon.md) | Implement embedded Ktor HTTP & WebSocket server, serving embedded web assets. | 🟢 Complete |
+| **04** | [`step-04-kotlin-file-watcher.md`](./step-04-kotlin-file-watcher.md) | Build coroutine-based source directory watcher with debounced event dispatch. | 🟢 Complete |
+| **05** | [`step-05-e2e-pure-kotlin-pipeline.md`](./step-05-e2e-pure-kotlin-pipeline.md) | Wire the pipeline end-to-end: file save -> PSI parse -> LayoutLib render -> Ktor push. | 🟢 Complete |
 
 ---
 
