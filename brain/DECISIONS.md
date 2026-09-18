@@ -127,3 +127,23 @@ This document records the foundational architectural decisions made in Composito
   - One-line setup for existing Android projects: `plugins { id("io.compositor") version "0.1.0" }`.
   - Full, automatic access to Android resources (`R.string`, `R.drawable`, `R.style`), avoiding missing resource crashes in LayoutLib.
 
+---
+
+## ADR-008: Compose Multiplatform (Kotlin/Wasm) for Web Viewer
+
+* **Date**: September 2026
+* **Status**: Accepted
+* **Context**:
+  The web viewer frontend was initially envisioned in React/TypeScript, which required `npm`, `package.json`, and `node_modules` in the repository. This contradicted the goal of having a pure-Kotlin Android developer experience and fragmented the codebase across two different toolchains.
+* **Decision**:
+  Re-architect the `web-viewer` as a **Compose Multiplatform (CMP) for Web** application targeting **Kotlin/Wasm (`wasmJs`)**:
+  - Built 100% in Kotlin using Jetpack Compose UI primitives (`@Composable`, Material 3).
+  - Compiled directly by Gradle via `org.jetbrains.compose` and `wasmJsBrowserDistribution`.
+  - Renders directly onto an HTML5 `<canvas>` via Skiko/WasmGC with 60/120fps hardware acceleration.
+  - Interacts with the Ktor daemon over Ktor Client WebSockets in pure Kotlin.
+  - Purges `npm`, `package.json`, and `node_modules` entirely from the repository.
+* **Consequences**:
+  - 100% Kotlin across the entire repository (Backend, Renderer, and Frontend).
+  - Single unified build system: `./gradlew build` builds everything.
+  - Zero npm or Node.js dependencies for both developers and users.
+

@@ -1,32 +1,37 @@
-# Step 05: Element Bounds & Semantic Inspector Overlay
+# Step 05: Element Bounds & Semantic Inspector Overlay in Compose
 
 *Phase*: 2 — Production Web Viewer & Interactive Canvas  
-*Status*: Complete ✅  
+*Status*: Blocked by Step 04  
 *Target Module*: `web-viewer`
 
 ---
 
 ## 1. Objective
-Implement an interactive element inspector overlay on the browser canvas that highlights composable boundaries, margins/paddings, and semantic node information when hovering or clicking on the rendered preview.
+Implement an interactive element inspector overlay using Compose `Canvas` / `Modifier.drawWithContent` that renders bounding boxes over UI elements when hovering or clicking in the web viewer, displaying component types, dimensions in dp, and semantic accessibility metadata.
 
 ---
 
-## 2. Functional Requirements
-* **Layout Hierarchy Ingestion**: Consume layout bounding box data (`hierarchy.json` containing `[left, top, right, bottom]`, element names, and semantics) served alongside preview bitmaps.
-* **Hover Highlights**: Display translucent bounding box rectangles over hovered composable elements (e.g. Buttons, Text, Columns).
-* **Selection Details Panel**:
-  * Clicking an element pins the highlight and opens an Inspector Drawer.
-  * Displays: Element Type (e.g. `androidx.compose.material3.Text`), Dimensions (`width x height` in dp), Padding, and accessibility semantics.
-* **Toggle Inspector Mode**: Easily enable/disable the inspector via a dedicated toggle button or keyboard shortcut (`Alt + I`).
+## 2. Architectural Design & Responsibilities
+* **Layout Hierarchy Consumer**:
+  * Ingest the `hierarchy.json` endpoint from the Ktor daemon containing the tree of layout bounds (`[left, top, right, bottom]`), component types, and semantics.
+* **Canvas Bounding Box Overlay**:
+  * Implement an interactive overlay Composable positioned directly over the preview image.
+  * Use `Modifier.pointerInput` to detect hover coordinates.
+  * Draw translucent highlight rectangles around the hovered UI component using `drawRect` or `drawRoundRect`.
+* **Element Inspector Drawer**:
+  * Clicking an element locks the highlight and opens an Inspector Side Sheet.
+  * Displays: Component Name (e.g. `androidx.compose.material3.Button`), Dimensions (`width x height` in dp), Padding, and Accessibility labels.
+* **Inspector Toggle Mode**:
+  * Dedicated toggle button (`Alt + I` or toolbar icon) to turn inspector mode on/off.
 
 ---
 
 ## 3. High-Level Architectural Guidance
-* Render the bounding boxes as an SVG or HTML5 Canvas layer positioned precisely over the rendered bitmap image.
-* Calculate coordinate scaling dynamically so bounding boxes remain aligned across all zoom levels and device bezel sizes.
-* Ensure pointer events pass through cleanly when inspector mode is deactivated.
+* Accurately scale layout coordinates from device viewport pixels to the zoomed/panned canvas view.
+* When inspector mode is deactivated, pointer events must pass through cleanly.
 
 ---
 
 ## 4. Verification & Quality Gates
-* **Unit & Interaction Tests**: Simulate hover events on scaled coordinates and verify highlight rectangle matches expected bounding box coordinates.
+* **Build Verification**: Run `./gradlew :web-viewer:wasmJsBrowserDistribution`; assert clean compilation and error-free execution in Wasm.
+* **Quality Gate**: Code must pass `./gradlew detekt`.

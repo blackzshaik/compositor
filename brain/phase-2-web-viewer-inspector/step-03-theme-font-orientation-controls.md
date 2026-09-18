@@ -1,36 +1,39 @@
-# Step 03: Theme, Typography & Orientation Controls
+# Step 03: Theme, Typography & Orientation Controls in Compose
 
 *Phase*: 2 — Production Web Viewer & Interactive Canvas  
-*Status*: Complete ✅  
+*Status*: Blocked by Step 02  
 *Target Module*: `web-viewer`
 
 ---
 
 ## 1. Objective
-Add an interactive top inspector toolbar enabling developers to toggle Android UI configurations in real-time: Light/Dark mode, Typography font scaling (0.85x to 1.5x), and Screen Orientation (Portrait vs. Landscape).
+Build an interactive top toolbar in Compose Material 3 (`TopAppBar`) allowing developers to toggle light/dark theme modes, test typography font scaling (0.85x to 1.5x) via a dynamic slider, flip screen orientation, and toggle live WebSocket connection status.
 
 ---
 
-## 2. Functional Requirements
-* **Theme Toggle**:
-  * Quick switch between Light Mode and Dark Mode (`uiMode = Configuration.UI_MODE_NIGHT_YES / NO`).
-  * If the preview already defines a dark mode variant, switch instantly to it; otherwise request on-demand render with dark theme flag.
-* **Font Scaling Slider**:
-  * Continuous slider or stepped buttons (0.85x Small, 1.0x Normal, 1.15x Large, 1.3x Extra Large, 1.5x Huge).
-  * Used to catch typography clipping and layout breakage.
+## 2. Architectural Design & Responsibilities
+* **Top App Bar Composable**:
+  * Implement `@Composable fun InspectorTopBar(...)` using Material 3 `TopAppBar`.
+  * Display project title, connected daemon status badge, and quick action controls.
+* **Theme Switching**:
+  * Material 3 `Switch` or `IconToggleButton` to switch between Light Mode and Dark Mode.
+  * Either selects a matching `@Preview(uiMode = ...)` variant from the catalog or triggers an on-demand re-render via daemon API with the dark theme override flag.
+* **Typography Font Scale Slider**:
+  * Material 3 `Slider` with discrete snap steps: 0.85x (Small), 1.0x (Normal), 1.15x (Large), 1.3x (Extra Large), 1.5x (Huge).
+  * Immediately displays active font scale and dispatches re-render requests to verify text wrapping.
 * **Orientation Toggle**:
-  * Flip between Portrait and Landscape viewports, updating device bezel rotation smoothly with CSS transitions.
-* **Background Color Picker**:
-  * Toggle light/dark canvas backdrop or transparent checkerboard to inspect transparent composables.
+  * `IconButton` flipping device orientation between Portrait and Landscape with animated rotation transitions.
+* **Live WebSocket Sync Status**:
+  * Pulsing status dot indicating real-time WebSocket connection to the Ktor daemon (`Live Sync` vs `Disconnected / Retrying`).
 
 ---
 
-## 3. High-Level Architectural Guidance
-* Model these configuration settings in a central `PreviewConfigContext`.
-* When an active control changes, either select the matching variant from the preview catalog or dispatch a `POST /api/previews/:id/render` call with requested parameter overrides.
-* Persist active preferences across session reloads.
+## 3. High-Level Integration Guidance
+* Hoist inspector configuration state into a clean data class: `data class InspectorConfig(val isDarkTheme: Boolean, val fontScale: Float, val isLandscape: Boolean)`.
+* Provide a "Refresh" button that forces an immediate re-fetch of the preview frame.
 
 ---
 
 ## 4. Verification & Quality Gates
-* **Interactive Unit Tests**: Verify slider changes trigger state updates and theme toggling alters the image source URL or variant selector accurately.
+* **Build Verification**: Run `./gradlew :web-viewer:wasmJsBrowserDistribution`; assert clean compilation and error-free execution in Wasm.
+* **Quality Gate**: Code must pass `./gradlew detekt`.

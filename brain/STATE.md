@@ -42,8 +42,14 @@ Master Orchestrator: [`brain/phase-1-daemon-and-engine/INDEX.md`](./phase-1-daem
 - [x] **Step 04**: [`step-04-kotlin-file-watcher.md`](./phase-1-daemon-and-engine/step-04-kotlin-file-watcher.md) — 🟢 Complete
 - [x] **Step 05**: [`step-05-e2e-pure-kotlin-pipeline.md`](./phase-1-daemon-and-engine/step-05-e2e-pure-kotlin-pipeline.md) — 🟢 Complete
 
-### Phase 2: Production Web Viewer & Inspector Canvas — [ACTIVE ◀]
+### Phase 2: Production Web Viewer & Inspector Canvas (Compose Multiplatform Wasm) — [ACTIVE ◀]
 Master Orchestrator: [`brain/phase-2-web-viewer-inspector/INDEX.md`](./phase-2-web-viewer-inspector/INDEX.md)
+- [ ] **Step 01**: [`step-01-cmp-scaffolding-and-sidebar.md`](./phase-2-web-viewer-inspector/step-01-cmp-scaffolding-and-sidebar.md) ◀ **CURRENT ACTIVE STEP**
+- [ ] **Step 02**: [`step-02-multi-device-frames.md`](./phase-2-web-viewer-inspector/step-02-multi-device-frames.md)
+- [ ] **Step 03**: [`step-03-theme-font-orientation-controls.md`](./phase-2-web-viewer-inspector/step-03-theme-font-orientation-controls.md)
+- [ ] **Step 04**: [`step-04-multi-preview-grid-matrix.md`](./phase-2-web-viewer-inspector/step-04-multi-preview-grid-matrix.md)
+- [ ] **Step 05**: [`step-05-element-inspector-bounds-overlay.md`](./phase-2-web-viewer-inspector/step-05-element-inspector-bounds-overlay.md)
+- [ ] **Step 06**: [`step-06-error-diagnostics-boundary.md`](./phase-2-web-viewer-inspector/step-06-error-diagnostics-boundary.md)
 
 ### Phase 3: Shippable Compositor Gradle Plugin (`io.compositor`) — [PLANNED ⚪]
 Master Orchestrator: [`brain/phase-3-shippable-gradle-plugin/INDEX.md`](./phase-3-shippable-gradle-plugin/INDEX.md)
@@ -65,4 +71,4 @@ To advance implementation in a fresh session, instruct the AI agent:
 ```
 Build from brain: phase-2-step-01
 ```
-The agent will read the Phase 2 orchestrator and advance the web viewer inspector implementation.
+The agent will read `step-01-cmp-scaffolding-and-sidebar.md`, scaffold the Compose Multiplatform Wasm subproject in `web-viewer/`, build the searchable sidebar in Jetpack Compose, verify with Gradle, and advance state.
