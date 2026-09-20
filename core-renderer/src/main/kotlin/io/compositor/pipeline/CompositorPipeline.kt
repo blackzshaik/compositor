@@ -109,11 +109,16 @@ class CompositorPipeline(
                 )
             }
             is RenderResult.Failure -> {
+                val details = if (result.stackTrace.isNotBlank()) {
+                    "${result.errorMessage}\n${result.stackTrace}"
+                } else {
+                    result.errorMessage
+                }
                 previewRegistry.updateRenderStatus(
                     previewId = previewId,
                     update = RenderStateUpdate(
                         status = PreviewRenderStatus.ERROR,
-                        errorDetails = result.errorMessage
+                        errorDetails = details
                     )
                 )
             }

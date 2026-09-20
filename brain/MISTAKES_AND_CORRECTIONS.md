@@ -187,3 +187,24 @@ This document serves as an institutional memory log of engineering pitfalls, pla
   Always import IntelliJ utility and AST classes from `org.jetbrains.kotlin.com.intellij.*` (e.g.
   `org.jetbrains.kotlin.com.intellij.openapi.util.Disposer`) when working in modules using
   `kotlin-compiler-embeddable`.
+
+---
+
+### Entry 013: Gradle Daemon Bytecode Instrumentation & ClassLoader Isolation for LayoutLib
+* **Date**: September 2026
+* **Category**: Gradle Plugin / Process Isolation / LayoutLib
+* **Symptom**:
+  1. `java.lang.NoClassDefFoundError: org/jetbrains/kotlin/gradle/internal/config/CompilerConfigurationKey` when
+     `KotlinCoreEnvironment` initializes inside the Gradle daemon process.
+  2. `java.lang.NoClassDefFoundError: androidx/compose/ui/platform/ComposeView` when `PaparazziSdk.snapshot()`
+     is invoked because `PaparazziSdk` directly instantiates `ComposeView` on the JVM's `AppClassLoader`.
+* **Root Cause**:
+  1. Gradle 8.x daemon bytecode instrumentation (`InstrumentingVisitableURLClassLoader`) rewrites bytecode references
+     of loaded plugins and intercepts Kotlin compiler types when executed in-process.
+  2. Standard parent-first ClassLoading prevents `AppClassLoader` (where `PaparazziSdk` lives) from seeing classes
+     loaded solely by a child ClassLoader.
+* **Correction & Prevention**:
+  1. Never run `KotlinPsiPreviewScanner` or `LayoutLibPreviewRenderer` in the Gradle daemon process. Use a standalone
+     CLI entry point (`io.compositor.pipeline.CompositorCli`) spawned in a clean, forked JVM via `project.javaexec`.
+  2. Provide the full runtime classpath (`compositorRuntime + context.allClasspathFiles()`) to `javaexec` so that
+     `ComposeView`, `android.jar`, and all Compose runtime dependencies reside directly on the application ClassLoader.

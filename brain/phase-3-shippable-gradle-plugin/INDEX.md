@@ -30,12 +30,12 @@ Package Compositor into a standalone, publishable Android Gradle Plugin (`id("io
 
 ## Step Progression
 
-| Step | File | Scope |
-| :--- | :--- | :--- |
-| **01** | [`step-01-gradle-plugin-scaffolding.md`](./step-01-gradle-plugin-scaffolding.md) | Scaffold Gradle Plugin project (`plugin/`) with Gradle Plugin Portal publishing metadata. |
-| **02** | [`step-02-agp-classpath-resource-resolution.md`](./step-02-agp-classpath-resource-resolution.md) | Hook into Android Gradle Plugin (AGP) API to extract classpaths and merged resources. |
-| **03** | [`step-03-compositor-tasks-registration.md`](./step-03-compositor-tasks-registration.md) | Register the `./gradlew compositor` and `./gradlew compositorRender` tasks. |
-| **04** | [`step-04-external-project-verification.md`](./step-04-external-project-verification.md) | Verify applying the plugin to a separate external Android app with zero configuration. |
+| Step | Status | File | Scope |
+| :--- | :--- | :--- | :--- |
+| **01** | 🟢 Complete | [`step-01-gradle-plugin-scaffolding.md`](./step-01-gradle-plugin-scaffolding.md) | Scaffold Gradle Plugin project (`plugin/`) with Gradle Plugin Portal publishing metadata. |
+| **02** | 🟢 Complete | [`step-02-agp-classpath-resource-resolution.md`](./step-02-agp-classpath-resource-resolution.md) | Hook into Android Gradle Plugin (AGP) API to extract classpaths and merged resources. |
+| **03** | 🟢 Complete | [`step-03-compositor-tasks-registration.md`](./step-03-compositor-tasks-registration.md) | Register the `./gradlew compositor` and `./gradlew compositorRender` tasks. |
+| **04** | 🟢 Complete | [`step-04-external-project-verification.md`](./step-04-external-project-verification.md) | Verify applying the plugin to a separate external Android app with zero configuration. |
 
 ---
 

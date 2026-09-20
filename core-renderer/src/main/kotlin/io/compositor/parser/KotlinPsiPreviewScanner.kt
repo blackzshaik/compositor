@@ -23,12 +23,23 @@ import java.io.File
 class KotlinPsiPreviewScanner {
 
     private val disposable = Disposer.newDisposable()
-    private val environment: KotlinCoreEnvironment = KotlinCoreEnvironment.createForProduction(
-        disposable,
-        CompilerConfiguration(),
-        EnvironmentConfigFiles.JVM_CONFIG_FILES
-    )
+    private val environment: KotlinCoreEnvironment = createEnvironment()
     private val psiFactory: KtPsiFactory = KtPsiFactory(environment.project, markGenerated = false)
+
+    private fun createEnvironment(): KotlinCoreEnvironment {
+        val oldClassLoader = Thread.currentThread().contextClassLoader
+        return try {
+            val isolatedLoader = java.net.URLClassLoader(emptyArray(), ClassLoader.getPlatformClassLoader())
+            Thread.currentThread().contextClassLoader = isolatedLoader
+            KotlinCoreEnvironment.createForProduction(
+                disposable,
+                CompilerConfiguration(),
+                EnvironmentConfigFiles.JVM_CONFIG_FILES
+            )
+        } finally {
+            Thread.currentThread().contextClassLoader = oldClassLoader
+        }
+    }
 
     /**
      * Parses the Kotlin source code string and extracts all `@Preview` definitions.

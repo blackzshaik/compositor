@@ -18,8 +18,8 @@
 | **Tracer Bullet Spike**      | 🟢 Evaluated | Proved JVM rendering and web canvas feasibility; identified need to replace Paparazzi and Node.js. |
 | **Phase 1: Native LayoutLib & Ktor Daemon** | 🟢 Complete | Direct LayoutLib engine, PSI parser, Ktor daemon, Coroutine watcher, and reactive pipeline integrated in pure Kotlin. |
 | **Phase 2: Production Web Viewer**          | 🟢 Complete | Compose Multiplatform (Kotlin/Wasm) viewer with hardware bezels, matrix, & inspector. |
-| **Phase 3: Shippable Gradle Plugin**        | 🟡 Next Up | Standalone plugin `id("io.compositor")` for any external Android app. |
-| **Phase 4: Embedded Kotlin MCP Server**     | ⚪ Planned | Official JetBrains Kotlin MCP SDK embedded in Ktor daemon. |
+| **Phase 3: Shippable Gradle Plugin**        | 🟢 Complete | Standalone plugin `id("io.compositor")` with AGP classpath resolution & batch render. |
+| **Phase 4: Embedded Kotlin MCP Server**     | 🟡 Next Up  | Official JetBrains Kotlin MCP SDK embedded in Ktor daemon. |
 | **Phase 5: IDE Extensions (VS Code/Cursor)**| ⚪ Planned | Sidebar panel & command palette integration. |
 
 ---
@@ -51,14 +51,14 @@ Master Orchestrator: [`brain/phase-2-web-viewer-inspector/INDEX.md`](./phase-2-w
 - [x] **Step 05**: [`step-05-element-inspector-bounds-overlay.md`](./phase-2-web-viewer-inspector/step-05-element-inspector-bounds-overlay.md) — 🟢 Complete
 - [x] **Step 06**: [`step-06-error-diagnostics-boundary.md`](./phase-2-web-viewer-inspector/step-06-error-diagnostics-boundary.md) — 🟢 Complete
 
-### Phase 3: Shippable Compositor Gradle Plugin (`io.compositor`) — [ACTIVE ◀]
+### Phase 3: Shippable Compositor Gradle Plugin (`io.compositor`) — [COMPLETE 🟢]
 Master Orchestrator: [`brain/phase-3-shippable-gradle-plugin/INDEX.md`](./phase-3-shippable-gradle-plugin/INDEX.md)
-- [ ] Step 01: Gradle Plugin Scaffolding & Configuration ◀ **CURRENT ACTIVE STEP**
-- [ ] Step 02: AGP Classpath & Android Resource Resolution
-- [ ] Step 03: Compositor Gradle Tasks Registration (`./gradlew compositor`)
-- [ ] Step 04: External Project Verification & Standalone Shipping
+- [x] **Step 01**: [`step-01-gradle-plugin-scaffolding.md`](./phase-3-shippable-gradle-plugin/step-01-gradle-plugin-scaffolding.md) — 🟢 Complete
+- [x] **Step 02**: [`step-02-agp-classpath-resource-resolution.md`](./phase-3-shippable-gradle-plugin/step-02-agp-classpath-resource-resolution.md) — 🟢 Complete
+- [x] **Step 03**: [`step-03-compositor-tasks-registration.md`](./phase-3-shippable-gradle-plugin/step-03-compositor-tasks-registration.md) — 🟢 Complete
+- [x] **Step 04**: [`step-04-external-project-verification.md`](./phase-3-shippable-gradle-plugin/step-04-external-project-verification.md) — 🟢 Complete
 
-### Phase 4: Embedded Kotlin MCP Server for AI Agents — [PLANNED ⚪]
+### Phase 4: Embedded Kotlin MCP Server for AI Agents — [ACTIVE ◀]
 Master Orchestrator: [`brain/phase-4-ai-agent-vision-bridge/INDEX.md`](./phase-4-ai-agent-vision-bridge/INDEX.md)
 
 ### Phase 5: IDE Extensions (VS Code / Cursor) — [PLANNED ⚪]

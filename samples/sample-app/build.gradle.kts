@@ -2,6 +2,14 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.compositor)
+}
+
+compositor {
+    port.set(3001)
+    autoOpenBrowser.set(false)
+    preferredTheme.set("system")
+    variantName.set("debug")
 }
 
 android {
