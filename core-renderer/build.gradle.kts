@@ -42,7 +42,9 @@ dependencies {
 }
 
 val copyWebViewer by tasks.registering(Copy::class) {
-    from(rootProject.file("web-viewer/dist"))
+    val wasmDist = rootProject.file("web-viewer/build/dist/wasmJs/productionExecutable")
+    val legacyDist = rootProject.file("web-viewer/dist")
+    from(if (wasmDist.exists()) wasmDist else legacyDist)
     into(layout.buildDirectory.dir("resources/main/web"))
 }
 

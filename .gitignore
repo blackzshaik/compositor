@@ -24,6 +24,7 @@ local.properties
 
 # Kotlin
 .kotlin/
+kotlin-js-store/
 
 # Node.js & Web Viewer
 node_modules/

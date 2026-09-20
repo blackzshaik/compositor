@@ -7,7 +7,7 @@ pluginManagement {
 }
 
 dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)
     repositories {
         google()
         mavenCentral()
@@ -17,4 +17,5 @@ dependencyResolutionManagement {
 rootProject.name = "compositor"
 
 include(":core-renderer")
+include(":web-viewer")
 include(":samples:sample-app")
