@@ -147,3 +147,23 @@ This document records the foundational architectural decisions made in Composito
   - Single unified build system: `./gradlew build` builds everything.
   - Zero npm or Node.js dependencies for both developers and users.
 
+---
+
+## ADR-009: Embedded Kotlin MCP Server for AI Agent Vision Bridge
+
+* **Date**: September 2026
+* **Status**: Accepted
+* **Context**:
+  AI coding assistants (such as Antigravity, Cursor, and Claude Code) require direct programmatic and visual access to discovered Compose `@Preview` composables, on-demand rasterization, multimodal Base64 PNG images, layout hierarchy inspection, and closed-loop visual regression testing. The initial spike was implemented in Node.js/TypeScript under `mcp-server/`. However, running a separate Node process introduces inter-process overhead, requires a Node.js runtime, and decouples the AI tools from the native LayoutLib in-memory rendering pipeline.
+* **Decision**:
+  Implement the Model Context Protocol (MCP) server directly in Kotlin using the official JetBrains **Kotlin MCP SDK** (`io.modelcontextprotocol:kotlin-sdk:0.5.0`):
+  - **Embedded Daemon Transport**: Mounted directly in `CompositorDaemon` as Server-Sent Events (SSE) endpoints at `/mcp` and `/sse`.
+  - **Standard I/O CLI Transport**: Supported in `CompositorCli` via `StdioServerTransport`, allowing IDEs and local agents to launch the server as a subprocess (`./gradlew compositorMcp`) with strictly JSON-RPC stdout frames.
+  - **In-Memory Visual Regression**: Implemented `VisualDiffEngine` in pure Kotlin using `BufferedImage` with dimension normalization, threshold-based pixel delta calculation, and magenta overlay generation.
+  - **Baseline Persistence**: Implemented `BaselineManager` saving snapshots under `.compositor/baselines/`.
+  - **All 5 Core Vision Tools**: Registered `list_previews`, `render_preview`, `get_preview_image`, `inspect_layout_tree`, and `compare_previews`.
+* **Consequences**:
+  - Zero external Node.js/npm dependencies for AI agent workflows.
+  - Direct in-memory access to `PreviewRegistry`, `LayoutLibPreviewRenderer`, and layout bounds with sub-millisecond dispatch.
+  - 100% Kotlin across the entire repository stack.
+

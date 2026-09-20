@@ -1,5 +1,6 @@
 package io.compositor.daemon
 
+import io.compositor.mcp.CompositorMcpServer
 import io.compositor.parser.PreviewCatalog
 import io.compositor.parser.PreviewItem
 import io.compositor.parser.PreviewRegistry
@@ -9,6 +10,8 @@ import io.compositor.watcher.SourceDirectoryWatcher
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.sse.SSE
+import io.modelcontextprotocol.kotlin.sdk.server.mcp
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
@@ -58,6 +61,12 @@ class CompositorDaemon(
     private var server: EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration>? = null
     private var watcherDispatcher: PreviewWatchDispatcher? = null
 
+    val mcpServer: CompositorMcpServer = CompositorMcpServer(
+        previewRegistry = previewRegistry,
+        projectRoot = projectRoot,
+        renderHandler = { id, _, _ -> renderHandler?.invoke(id) }
+    )
+
     private val json = Json {
         prettyPrint = true
         ignoreUnknownKeys = true
@@ -95,6 +104,8 @@ class CompositorDaemon(
             maxFrameSize = Long.MAX_VALUE
             masking = false
         }
+
+        app.install(SSE)
     }
 
     private fun installRoutes(app: Application) {
@@ -156,6 +167,10 @@ class CompositorDaemon(
                     activeWsSessions.remove(this)
                 }
             }
+
+            // Model Context Protocol (MCP) Server-Sent Events endpoints
+            mcp("/mcp") { mcpServer.server }
+            mcp("/sse") { mcpServer.server }
 
             // Embedded Web Viewer static bundle
             staticResources("/", "web", index = "index.html")

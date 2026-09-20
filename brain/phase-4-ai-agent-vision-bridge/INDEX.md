@@ -41,6 +41,6 @@ Equip AI coding agents (such as Antigravity, Cursor, Claude Code, Cline) with na
 ---
 
 ## Protocol for AI Agents
-1. Ensure the daemon (Phase 1) is operational before running the MCP server.
-2. Follow standard Model Context Protocol schemas (`@modelcontextprotocol/sdk`).
-3. Ensure tools return clear, structured error responses if a preview fails to compile or render.
+1. Agents can interact via CLI stdio transport (`./gradlew compositorMcp` or `CompositorCli` in `mcp` mode) or via the embedded Ktor daemon SSE endpoints (`/mcp` and `/sse`).
+2. Adhere to official Kotlin Model Context Protocol SDK specifications (`io.modelcontextprotocol:kotlin-sdk`).
+3. Tool executions return structured text or image content blocks, formatting compilation or layout errors clearly for autonomous LLM self-correction.

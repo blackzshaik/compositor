@@ -1,13 +1,13 @@
 # Step 04: Visual Regression & Layout Diffing Tool
 
-*Phase*: 3 — AI Agent Vision Bridge  
+*Phase*: 4 — AI Agent Vision Bridge  
 *Status*: Complete ✅  
-*Target Module*: `mcp-server`
+*Target Module*: `:core-renderer`
 
 ---
 
 ## 1. Objective
-Build an automated visual regression and diffing tool (`compare_previews`) allowing AI coding agents to verify code edits against baseline states, measuring exact pixel differences and identifying unintended layout shifts.
+Build an automated visual regression and diffing tool (`compare_previews`) using a pure-Kotlin `VisualDiffEngine` and `BaselineManager`, allowing AI coding agents to verify code edits against baseline states, measuring exact pixel differences, identifying layout shifts, and generating magenta-highlighted diff overlays.
 
 ---
 
@@ -17,21 +17,26 @@ Build an automated visual regression and diffing tool (`compare_previews`) allow
 * **Description**: Compares the current render of a composable against its previous baseline snapshot (or compares two named previews), generating a pixel-diff percentage and a visual diff overlay.
 * **Input Schema**:
   * `previewId` (string, required): The target preview identifier.
-  * `baselineTimestamp` (number, optional): Compare against a specific historical snapshot.
+  * `baselineId` (string, optional): An explicit baseline snapshot identifier.
+  * `tolerance` (number, optional: `0.0` to `1.0`, default `0.1`): Color distance sensitivity threshold.
 * **Return Payload**:
   * `hasVisualDifferences`: Boolean flag.
   * `differencePercentage`: Float (e.g. `4.2%`).
-  * `diffImage`: Base64 PNG highlighting visual differences in magenta/red overlay.
-  * `summary`: Descriptive explanation of the visual impact.
+  * `diffImageBase64`: Base64 PNG highlighting visual differences in magenta overlay (`0xFFFF007F`).
+  * `summary`: Descriptive explanation of the visual impact and total pixel metrics.
 
 ---
 
 ## 3. High-Level Architectural Guidance
-* Utilize a fast in-memory image diff library (e.g. `pixelmatch` or canvas-based pixel comparison).
-* Maintain a local cache of the previous render frame under `.compositor/baselines/` when a session begins or git commit changes.
-* This tool enables autonomous closed-loop UI refactoring: an AI can adjust padding, call `compare_previews`, verify that only the intended element shifted, and conclude the edit successfully.
+* Pure Kotlin `VisualDiffEngine` implements Euclidean RGB color distance:
+  $$\Delta C = \sqrt{(\Delta R)^2 + (\Delta G)^2 + (\Delta B)^2} / \sqrt{255^2 \times 3}$$
+* Handles mismatched dimensions gracefully by taking the maximum width and height and padding transparently.
+* `BaselineManager` manages baseline snapshots under `.compositor/baselines/` with sanitized IDs and ISO-8601 timestamps.
 
 ---
 
 ## 4. Verification & Quality Gates
-* **Automated Unit Tests**: Provide two test fixture images (identical vs 5% modified); assert that `compare_previews` reports 0% difference on identical images and accurate percentage on modified images.
+* **Unit Tests**:
+  * `VisualDiffEngineTest`: Validates identical images (0%), modified images (>0%), dimension padding, and byte-array conversions.
+  * `BaselineManagerTest`: Validates ID sanitization, snapshot persistence, and retrieval.
+* **Integration Tests**: `CompositorMcpServerTest` validates end-to-end `compare_previews` execution.

@@ -1,7 +1,7 @@
 # Living Project State
 
 *Last Updated*: September 2026  
-*Current Phase*: **Phase 4 Complete (IDE Extensions & Plugin Ecosystem for VS Code / Cursor Verified)**
+*Current Phase*: **Phase 4 Complete (Embedded Kotlin MCP Server for AI Agents Verified)**
 
 ---
 
@@ -14,13 +14,13 @@
 | **Architecture & Standards**| 🟢 Complete | `docs/ARCHITECTURE.md`, `docs/CODING_STANDARDS.md`, `docs/CONTRIBUTING.md`. |
 | **Agent Operational Rules** | 🟢 Complete | `AGENT.md` anti-slop rules, modular boundaries. |
 | **Kotlin Quality Gates**    | 🟢 Complete | Detekt `1.23.8` configured, Kover `0.9.9` configured, Gradle 8.12 LTS wrapper configured. |
-| **Agent Brain (`brain/`)**   | 🟢 Complete | ADRs (ADR-001 through ADR-007), post-mortems, and roadmap specs. |
+| **Agent Brain (`brain/`)**   | 🟢 Complete | ADRs (ADR-001 through ADR-009), post-mortems, and roadmap specs. |
 | **Tracer Bullet Spike**      | 🟢 Evaluated | Proved JVM rendering and web canvas feasibility; identified need to replace Paparazzi and Node.js. |
-| **Phase 1: Native LayoutLib & Ktor Daemon** | 🟢 Complete | Direct LayoutLib engine, PSI parser, Ktor daemon, Coroutine watcher, and reactive pipeline integrated in pure Kotlin. |
+| **Phase 1: Native LayoutLib & Ktor Daemon** | 🟢 Complete | Direct LayoutLib engine, PSI parser, Ktor daemon, Coroutine watcher, and reactive pipeline in pure Kotlin. |
 | **Phase 2: Production Web Viewer**          | 🟢 Complete | Compose Multiplatform (Kotlin/Wasm) viewer with hardware bezels, matrix, & inspector. |
 | **Phase 3: Shippable Gradle Plugin**        | 🟢 Complete | Standalone plugin `id("io.compositor")` with AGP classpath resolution & batch render. |
-| **Phase 4: Embedded Kotlin MCP Server**     | 🟡 Next Up  | Official JetBrains Kotlin MCP SDK embedded in Ktor daemon. |
-| **Phase 5: IDE Extensions (VS Code/Cursor)**| ⚪ Planned | Sidebar panel & command palette integration. |
+| **Phase 4: Embedded Kotlin MCP Server**     | 🟢 Complete | Official JetBrains Kotlin MCP SDK embedded in Ktor daemon & stdio CLI (`compositorMcp`). |
+| **Phase 5: IDE Extensions (VS Code/Cursor)**| 🟡 Next Up  | Sidebar panel & command palette integration. |
 
 ---
 
@@ -58,10 +58,14 @@ Master Orchestrator: [`brain/phase-3-shippable-gradle-plugin/INDEX.md`](./phase-
 - [x] **Step 03**: [`step-03-compositor-tasks-registration.md`](./phase-3-shippable-gradle-plugin/step-03-compositor-tasks-registration.md) — 🟢 Complete
 - [x] **Step 04**: [`step-04-external-project-verification.md`](./phase-3-shippable-gradle-plugin/step-04-external-project-verification.md) — 🟢 Complete
 
-### Phase 4: Embedded Kotlin MCP Server for AI Agents — [ACTIVE ◀]
+### Phase 4: Embedded Kotlin MCP Server for AI Agents — [COMPLETE 🟢]
 Master Orchestrator: [`brain/phase-4-ai-agent-vision-bridge/INDEX.md`](./phase-4-ai-agent-vision-bridge/INDEX.md)
+- [x] **Step 01**: [`step-01-mcp-server-scaffolding.md`](./phase-4-ai-agent-vision-bridge/step-01-mcp-server-scaffolding.md) — 🟢 Complete
+- [x] **Step 02**: [`step-02-preview-catalog-and-render-tools.md`](./phase-4-ai-agent-vision-bridge/step-02-preview-catalog-and-render-tools.md) — 🟢 Complete
+- [x] **Step 03**: [`step-03-vision-image-and-layout-tools.md`](./phase-4-ai-agent-vision-bridge/step-03-vision-image-and-layout-tools.md) — 🟢 Complete
+- [x] **Step 04**: [`step-04-visual-regression-diff-tool.md`](./phase-4-ai-agent-vision-bridge/step-04-visual-regression-diff-tool.md) — 🟢 Complete
 
-### Phase 5: IDE Extensions (VS Code / Cursor) — [PLANNED ⚪]
+### Phase 5: IDE Extensions (VS Code / Cursor) — [ACTIVE ◀]
 Master Orchestrator: [`brain/phase-5-ide-extensions/INDEX.md`](./phase-5-ide-extensions/INDEX.md)
 
 ---
@@ -69,6 +73,6 @@ Master Orchestrator: [`brain/phase-5-ide-extensions/INDEX.md`](./phase-5-ide-ext
 ## 🤖 AI Agent Command Trigger
 To advance implementation in a fresh session, instruct the AI agent:
 ```
-Build from brain: phase-3-step-01
+Build from brain: phase-5-step-01
 ```
-The agent will read `phase-3-shippable-gradle-plugin/step-01-plugin-scaffolding.md`, scaffold the Gradle plugin module, and advance state.
+The agent will read `phase-5-ide-extensions/step-01-vscode-extension-scaffolding.md`, scaffold the extension module, and advance state.

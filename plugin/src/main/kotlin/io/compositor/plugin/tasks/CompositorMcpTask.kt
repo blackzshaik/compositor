@@ -1,0 +1,81 @@
+package io.compositor.plugin.tasks
+
+import io.compositor.plugin.CompositorExtension
+import io.compositor.plugin.CompositorPlugin
+import io.compositor.plugin.resolution.AndroidClasspathResolver
+import org.gradle.api.DefaultTask
+import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.TaskAction
+import java.io.File
+
+/**
+ * Gradle task that starts the headless Compositor Model Context Protocol (MCP) server
+ * over standard I/O for AI coding agents (such as Antigravity, Cursor, and Claude Code).
+ */
+abstract class CompositorMcpTask : DefaultTask() {
+
+    @get:Input
+    abstract val variantName: Property<String>
+
+    init {
+        group = TASK_GROUP
+        description = "Starts the headless Compositor MCP server over stdio for AI coding agents."
+    }
+
+    @TaskAction
+    fun run() {
+        val extension = project.extensions.getByType(CompositorExtension::class.java)
+        val context = AndroidClasspathResolver.resolve(project, extension)
+
+        val compositorDir = File(context.projectRoot, ".compositor").apply { mkdirs() }
+        val previewsDir = File(compositorDir, "previews").apply { mkdirs() }
+        val configFile = File(compositorDir, "mcp-config.json")
+
+        val rootEscaped = escape(context.projectRoot.absolutePath)
+        val watchEscaped = context.watchRoots.joinToString(",") { "\"${escape(it.absolutePath)}\"" }
+        val classesEscaped = context.allClasspathFiles().joinToString(",") { "\"${escape(it.absolutePath)}\"" }
+        val resEscaped = context.mergedResourceDirs.joinToString(",") { "\"${escape(it.absolutePath)}\"" }
+        val rJarEscaped = context.rJar?.let { "\"${escape(it.absolutePath)}\"" } ?: "null"
+        val layoutLibEscaped = context.layoutLibDataDir?.let { "\"${escape(it.absolutePath)}\"" } ?: "null"
+        val outEscaped = escape(previewsDir.absolutePath)
+
+        configFile.writeText(
+            """
+            {
+              "mode": "mcp",
+              "projectRoot": "$rootEscaped",
+              "port": 3001,
+              "watchRoots": [$watchEscaped],
+              "classesDirs": [$classesEscaped],
+              "resourceDirs": [$resEscaped],
+              "rJar": $rJarEscaped,
+              "layoutLibDataDir": $layoutLibEscaped,
+              "outputDir": "$outEscaped",
+              "autoOpenBrowser": false
+            }
+            """.trimIndent()
+        )
+
+        val runtimeClasspath = project.configurations.getByName(CompositorPlugin.COMPOSITOR_RUNTIME_CONFIG)
+        val fullClasspath = runtimeClasspath + project.files(context.allClasspathFiles())
+
+        project.javaexec { spec ->
+            spec.mainClass.set("io.compositor.pipeline.CompositorCli")
+            spec.classpath = fullClasspath
+            spec.args = listOf(configFile.absolutePath)
+            spec.jvmArgs = listOf("-Xmx2048m")
+            spec.standardInput = System.`in`
+            context.layoutLibDataDir?.let {
+                spec.systemProperty("paparazzi.layoutlib.resources.root", it.absolutePath)
+            }
+        }
+    }
+
+    private fun escape(path: String): String = path.replace("\\", "\\\\")
+
+    companion object {
+        const val TASK_NAME = "compositorMcp"
+        const val TASK_GROUP = "compositor"
+    }
+}

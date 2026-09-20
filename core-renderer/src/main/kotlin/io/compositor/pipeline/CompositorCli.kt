@@ -1,6 +1,11 @@
 package io.compositor.pipeline
 
 import io.compositor.parser.PreviewRenderStatus
+import io.modelcontextprotocol.kotlin.sdk.server.StdioServerTransport
+import kotlinx.coroutines.runBlocking
+import kotlinx.io.asSink
+import kotlinx.io.asSource
+import kotlinx.io.buffered
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.awt.Desktop
@@ -70,10 +75,31 @@ object CompositorCli {
 
         val pipelineConfig = config.toPipelineConfig()
 
-        if (config.mode.equals("render", ignoreCase = true)) {
-            runBatchRender(pipelineConfig)
-        } else {
-            runDaemon(pipelineConfig, config.autoOpenBrowser)
+        when {
+            config.mode.equals("render", ignoreCase = true) -> runBatchRender(pipelineConfig)
+            config.mode.equals("mcp", ignoreCase = true) -> runMcpServer(pipelineConfig)
+            else -> runDaemon(pipelineConfig, config.autoOpenBrowser)
+        }
+    }
+
+    private fun runMcpServer(config: PipelineConfig) {
+        System.err.println("Compositor: Starting MCP server for: ${config.projectRoot.path} (stdio transport)")
+        val pipeline = CompositorPipeline(config)
+        pipeline.initialScan()
+        val mcpServer = pipeline.daemon.mcpServer
+
+        val transport = StdioServerTransport(
+            System.`in`.asSource().buffered(),
+            System.out.asSink().buffered()
+        )
+
+        runBlocking {
+            Runtime.getRuntime().addShutdownHook(Thread {
+                System.err.println("\nCompositor: Shutting down MCP server...")
+                pipeline.stop()
+            })
+            System.err.println("Compositor MCP Server ready for JSON-RPC messages on stdio.")
+            mcpServer.server.connect(transport)
         }
     }
 

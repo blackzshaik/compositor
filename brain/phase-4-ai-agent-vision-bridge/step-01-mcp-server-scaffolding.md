@@ -1,35 +1,36 @@
 # Step 01: MCP Server Initialization & Transport
 
-*Phase*: 3 — AI Agent Vision Bridge  
+*Phase*: 4 — AI Agent Vision Bridge  
 *Status*: Complete ✅  
-*Target Module*: `mcp-server`
+*Target Module*: `:core-renderer`, `:plugin`
 
 ---
 
 ## 1. Objective
-Scaffold the standalone Model Context Protocol (MCP) server under `mcp-server/` using the official TypeScript SDK, establishing stdio (standard input/output) transport to interface directly with AI agent clients (such as Cursor or Antigravity).
+Scaffold the Model Context Protocol (MCP) server directly into `:core-renderer` and `:plugin` using the official Kotlin MCP SDK (`io.modelcontextprotocol:kotlin-sdk`), establishing both stdio (standard input/output) transport and embedded Ktor daemon SSE endpoints (`/mcp`, `/sse`) without external Node.js dependencies.
 
 ---
 
 ## 2. Functional Requirements
 * **MCP Server Initialization**:
-  * Set up `package.json`, `tsconfig.json`, and ESLint configurations in `mcp-server/`.
-  * Depend on `@modelcontextprotocol/sdk`.
-  * Implement server lifecycle: start, stop, handshake, and capability advertisement (tools).
+  * Integrate `io.modelcontextprotocol:kotlin-sdk:0.5.0` in `gradle/libs.versions.toml` and `core-renderer/build.gradle.kts`.
+  * Instantiate `Server(Implementation("compositor-mcp-server", "0.1.0"), ServerOptions(capabilities = ServerCapabilities(tools = ServerCapabilities.Tools(listChanged = true))))`.
+  * Implement server lifecycle, handshake, and tool capability advertisement.
 * **Transport Layer**:
-  * Support `StdioServerTransport` for local CLI / IDE integration.
-  * Optionally support Stream/SSE for remote daemon architectures.
-* **Daemon Client**:
-  * Implement a lightweight HTTP/IPC client communicating with the local Compositor daemon (`http://localhost:3001`).
+  * **CLI Stdio**: `StdioServerTransport` connected to `System.`in`` and `System.out` within `CompositorCli` (`mode = "mcp"`). All diagnostics strictly routed to `System.err`.
+  * **Daemon SSE**: Ktor `SSE` plugin installed in `CompositorDaemon`, serving `/mcp` and `/sse` endpoints using `mcpEndpoint(server)`.
+* **Gradle Integration**:
+  * `CompositorMcpTask` registered in `:plugin` as `./gradlew compositorMcp`, executing `CompositorCli` in an isolated JavaExec fork with complete runtime classpath.
 
 ---
 
 ## 3. High-Level Architectural Guidance
-* Ensure the MCP server process outputs strictly valid JSON-RPC frames to stdout; all diagnostic logs must be directed to `stderr` or a log file to avoid corrupting the protocol stream.
-* Handle daemon unavailability gracefully: if the Compositor daemon is offline, return helpful diagnostic messages instructing the agent to start the daemon.
+* The MCP server process must output strictly valid JSON-RPC frames to stdout; all diagnostic logs must be directed to `stderr` to prevent protocol stream corruption.
+* Single-binary, pure Kotlin architecture preserves cross-platform compatibility across Windows, macOS, and Linux without requiring Node/npm.
 
 ---
 
 ## 4. Verification & Quality Gates
-* **Smoke Test**: Launch the MCP server via script, send an `initialize` JSON-RPC request over stdin, and verify valid server capabilities response over stdout.
-* **Lint & Build**: Ensure `npm run build` and `npm run lint` pass cleanly.
+* **Automated Unit & Integration Tests**: `CompositorMcpServerTest` validates tool registration, execution, and protocol handshakes.
+* **Static Analysis**: 100% Detekt compliance with 0 code smells.
+* **Build Verification**: `./gradlew test` and `./gradlew publishToMavenLocal` succeed cleanly.
