@@ -167,3 +167,25 @@ This document records the foundational architectural decisions made in Composito
   - Direct in-memory access to `PreviewRegistry`, `LayoutLibPreviewRenderer`, and layout bounds with sub-millisecond dispatch.
   - 100% Kotlin across the entire repository stack.
 
+---
+
+## ADR-010: Thin TypeScript Shim for VS Code & Cursor Extension
+
+* **Date**: September 2026
+* **Status**: Accepted
+* **Context**:
+  To support modern developer workflows outside Android Studio, Compositor requires direct sidebar integration inside VS Code and Cursor. While Kotlin/JS targeting Node.js was evaluated to achieve 100% Kotlin in the repository, the VS Code Extension API (`vscode`) is inherently a dynamic TypeScript ecosystem with monthly API evolutions and complex disposable lifecycles. Community Kotlin/JS bindings for VS Code are brittle and lack long-term maintenance.
+* **Decision**:
+  Adopt the **universal industry standard** (demonstrated by `rust-analyzer`, `gopls`, Dart/Flutter, and `kotlin-language-server`):
+  - Author a **thin TypeScript shim (< 350 LOC)** inside `vscode-extension/`.
+  - The extension is solely responsible for:
+    1. Registering the `Compositor` activity bar container and sidebar `WebviewViewProvider`.
+    2. Embedding the Compose Multiplatform Wasm viewer (`web-viewer`) inside the webview iframe.
+    3. Registering Command Palette actions (`openPreview`, `reRenderActive`, `startDaemon`).
+    4. Auto-detecting Android workspaces and managing the `./gradlew compositor` background daemon process.
+  - **All core business logic, parsing, rendering, MCP server, and viewer UI remain 100% Kotlin**.
+* **Consequences**:
+  - First-class support for `@types/vscode`, `esbuild` instant bundling, and standard Marketplace packaging via `@vscode/vsce`.
+  - Minimal footprint (< 350 LOC) with zero custom Kotlin-to-JS transpilation hacks.
+  - Fully compatible with both VS Code and Cursor.
+

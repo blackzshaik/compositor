@@ -26,12 +26,12 @@ Bring Compositor directly into the developer's primary IDE environment (VS Code 
 
 ## Step Progression
 
-| Step | File | Scope |
-| :--- | :--- | :--- |
-| **01** | [`step-01-vscode-extension-scaffolding.md`](./step-01-vscode-extension-scaffolding.md) | Initialize VS Code extension package with TypeScript and manifest. |
-| **02** | [`step-02-webview-panel-integration.md`](./step-02-webview-panel-integration.md) | Build WebviewViewProvider hosting the `web-viewer` dashboard. |
-| **03** | [`step-03-commands-and-status-bar.md`](./step-03-commands-and-status-bar.md) | Add command palette actions and status bar live-sync indicator. |
-| **04** | [`step-04-auto-detection-and-workspace-lifecycle.md`](./step-04-auto-detection-and-workspace-lifecycle.md) | Implement Android workspace auto-detection and daemon process lifecycle. |
+| Step | File | Scope | Status |
+| :--- | :--- | :--- | :--- |
+| **01** | [`step-01-vscode-extension-scaffolding.md`](./step-01-vscode-extension-scaffolding.md) | Initialize VS Code extension package with TypeScript and manifest. | 🟢 Complete |
+| **02** | [`step-02-webview-panel-integration.md`](./step-02-webview-panel-integration.md) | Build WebviewViewProvider hosting the `web-viewer` dashboard. | 🟢 Complete |
+| **03** | [`step-03-commands-and-status-bar.md`](./step-03-commands-and-status-bar.md) | Add command palette actions and status bar live-sync indicator. | 🟢 Complete |
+| **04** | [`step-04-auto-detection-and-workspace-lifecycle.md`](./step-04-auto-detection-and-workspace-lifecycle.md) | Implement Android workspace auto-detection and daemon process lifecycle. | 🟢 Complete |
 
 ---
 

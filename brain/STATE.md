@@ -20,7 +20,7 @@
 | **Phase 2: Production Web Viewer**          | 🟢 Complete | Compose Multiplatform (Kotlin/Wasm) viewer with hardware bezels, matrix, & inspector. |
 | **Phase 3: Shippable Gradle Plugin**        | 🟢 Complete | Standalone plugin `id("io.compositor")` with AGP classpath resolution & batch render. |
 | **Phase 4: Embedded Kotlin MCP Server**     | 🟢 Complete | Official JetBrains Kotlin MCP SDK embedded in Ktor daemon & stdio CLI (`compositorMcp`). |
-| **Phase 5: IDE Extensions (VS Code/Cursor)**| 🟡 Next Up  | Sidebar panel & command palette integration. |
+| **Phase 5: IDE Extensions (VS Code/Cursor)**| 🟢 Complete | Thin TypeScript extension with sidebar Webview, commands, status bar, and workspace auto-detection. |
 
 ---
 
@@ -65,14 +65,19 @@ Master Orchestrator: [`brain/phase-4-ai-agent-vision-bridge/INDEX.md`](./phase-4
 - [x] **Step 03**: [`step-03-vision-image-and-layout-tools.md`](./phase-4-ai-agent-vision-bridge/step-03-vision-image-and-layout-tools.md) — 🟢 Complete
 - [x] **Step 04**: [`step-04-visual-regression-diff-tool.md`](./phase-4-ai-agent-vision-bridge/step-04-visual-regression-diff-tool.md) — 🟢 Complete
 
-### Phase 5: IDE Extensions (VS Code / Cursor) — [ACTIVE ◀]
+### Phase 5: IDE Extensions (VS Code / Cursor) — [COMPLETE 🟢]
 Master Orchestrator: [`brain/phase-5-ide-extensions/INDEX.md`](./phase-5-ide-extensions/INDEX.md)
+- [x] **Step 01**: [`step-01-vscode-extension-scaffolding.md`](./phase-5-ide-extensions/step-01-vscode-extension-scaffolding.md) — 🟢 Complete
+- [x] **Step 02**: [`step-02-webview-panel-integration.md`](./phase-5-ide-extensions/step-02-webview-panel-integration.md) — 🟢 Complete
+- [x] **Step 03**: [`step-03-commands-and-status-bar.md`](./phase-5-ide-extensions/step-03-commands-and-status-bar.md) — 🟢 Complete
+- [x] **Step 04**: [`step-04-auto-detection-and-workspace-lifecycle.md`](./phase-5-ide-extensions/step-04-auto-detection-and-workspace-lifecycle.md) — 🟢 Complete
 
 ---
 
-## 🤖 AI Agent Command Trigger
-To advance implementation in a fresh session, instruct the AI agent:
-```
-Build from brain: phase-5-step-01
-```
-The agent will read `phase-5-ide-extensions/step-01-vscode-extension-scaffolding.md`, scaffold the extension module, and advance state.
+## 🏆 Project Milestone
+All 5 phases of Compositor are complete:
+- **Phase 1**: Native LayoutLib Rendering Engine & Ktor Daemon (100% Kotlin)
+- **Phase 2**: Production Web Viewer (Compose Multiplatform Kotlin/Wasm)
+- **Phase 3**: Shippable Android Gradle Plugin (`id("io.compositor")`)
+- **Phase 4**: Embedded Kotlin Model Context Protocol (MCP) AI Agent Vision Bridge
+- **Phase 5**: IDE Extensions & Plugin Ecosystem (VS Code & Cursor)
