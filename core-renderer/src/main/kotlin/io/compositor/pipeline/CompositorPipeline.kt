@@ -148,6 +148,13 @@ class CompositorPipeline(
     @Synchronized
     fun renderPreview(previewId: String): PreviewItem? {
         val item = previewRegistry.getCatalog().previews[previewId] ?: return null
+        scope.launch {
+            daemon.broadcast(DaemonWsMessage.previewRenderStarted(previewId))
+        }
+        previewRegistry.updateRenderStatus(
+            previewId = previewId,
+            status = PreviewRenderStatus.RENDERING
+        )
         val def = item.definition
         val sourceFile = File(def.filePath)
         val compileResult = compileSourceIfNeeded(sourceFile, def)
@@ -162,24 +169,7 @@ class CompositorPipeline(
             )
         }
 
-        val className = resolveClassName(def)
-
-        val classpathList = mutableListOf<File>()
-        classpathList.addAll(config.classesDirs)
-        config.rJar?.let { if (it.exists()) classpathList.add(it) }
-
-        val sanitizedId = previewId.replace(':', '_').replace('#', '_').replace('.', '_')
-        val outputFile = File(config.outputDir, "$sanitizedId.png")
-
-        val request = RenderRequest(
-            composableId = previewId,
-            className = className,
-            methodName = def.functionName,
-            classpath = classpathList,
-            resourceDirs = config.resourceDirs,
-            deviceConfig = CompositorDeviceConfig.PIXEL_5,
-            outputFile = outputFile
-        )
+        val request = buildRenderRequest(previewId, def)
 
         return when (val result = renderer.render(request)) {
             is RenderResult.Success -> {
@@ -209,6 +199,26 @@ class CompositorPipeline(
                 )
             }
         }
+    }
+
+    private fun buildRenderRequest(previewId: String, def: PreviewDefinition): RenderRequest {
+        val className = resolveClassName(def)
+        val classpathList = mutableListOf<File>()
+        classpathList.addAll(config.classesDirs)
+        config.rJar?.let { if (it.exists()) classpathList.add(it) }
+
+        val sanitizedId = previewId.replace(':', '_').replace('#', '_').replace('.', '_')
+        val outputFile = File(config.outputDir, "$sanitizedId.png")
+
+        return RenderRequest(
+            composableId = previewId,
+            className = className,
+            methodName = def.functionName,
+            classpath = classpathList,
+            resourceDirs = config.resourceDirs,
+            deviceConfig = CompositorDeviceConfig.PIXEL_5,
+            outputFile = outputFile
+        )
     }
 
     /**
@@ -265,6 +275,11 @@ class CompositorPipeline(
                     scanner = scanner,
                     renderHandler = { previewId -> renderPreview(previewId) }
                 )
+                disp.onRenderStarted = { previewId ->
+                    scope.launch {
+                        daemon.broadcast(DaemonWsMessage.previewRenderStarted(previewId))
+                    }
+                }
                 disp.onSourceChanged = { file -> compileSourceIfNeeded(file) }
                 disp.onPreviewUpdated = { updatedItem ->
                     if (updatedItem.status == PreviewRenderStatus.ERROR) {

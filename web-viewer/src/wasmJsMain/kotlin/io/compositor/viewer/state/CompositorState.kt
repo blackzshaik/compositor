@@ -146,6 +146,9 @@ class CompositorState {
                 if (id == null || id == selectedPreviewId) {
                     isRendering = true
                 }
+                if (id != null) {
+                    updatePreviewStatusInCatalog(id, PreviewRenderStatus.RENDERING)
+                }
             }
             "PREVIEW_UPDATED" -> {
                 val id = payload?.get("previewId")?.jsonPrimitive?.contentOrNull

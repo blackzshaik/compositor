@@ -28,6 +28,11 @@ class PreviewWatchDispatcher(
     private var dispatchJob: Job? = null
 
     /**
+     * Optional listener invoked when preview rendering is initiated.
+     */
+    var onRenderStarted: (suspend (String) -> Unit)? = null
+
+    /**
      * Optional listener invoked when a source file changes before parsing/rendering.
      */
     var onSourceChanged: ((File) -> Unit)? = null
@@ -76,6 +81,7 @@ class PreviewWatchDispatcher(
     private suspend fun processClassFileChange(event: FileChangeEvent): List<PreviewItem> {
         val allItems = previewRegistry.getCatalog().previews.values.toList()
         for (item in allItems) {
+            onRenderStarted?.invoke(item.id)
             val renderedItem = if (renderHandler != null) {
                 renderHandler.invoke(item.id) ?: item
             } else {
@@ -88,6 +94,14 @@ class PreviewWatchDispatcher(
 
     private suspend fun processKotlinFileChange(event: FileChangeEvent): List<PreviewItem> {
         val content = FileReadHelper.readTextWithRetry(event.file) ?: return emptyList()
+        val normalizedPath = PreviewRegistry.normalizePath(event.file.invariantSeparatorsPath)
+        val existingItems = previewRegistry.getCatalog().previews.values.filter {
+            PreviewRegistry.normalizePath(it.definition.filePath) == normalizedPath
+        }
+        for (item in existingItems) {
+            onRenderStarted?.invoke(item.id)
+        }
+
         onSourceChanged?.invoke(event.file)
         val definitions = scanner.parseSource(content, event.file.invariantSeparatorsPath)
         val updatedItems = previewRegistry.updateFilePreviews(
@@ -97,6 +111,9 @@ class PreviewWatchDispatcher(
         )
 
         for (item in updatedItems) {
+            if (existingItems.none { it.id == item.id }) {
+                onRenderStarted?.invoke(item.id)
+            }
             val renderedItem = if (renderHandler != null) {
                 renderHandler.invoke(item.id) ?: item
             } else {

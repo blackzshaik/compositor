@@ -223,6 +223,8 @@ class PreviewRegistry(private val storageFile: File? = null) {
         items.putAll(loaded.previews)
     }
 
-    private fun normalizePath(rawPath: String): String =
-        rawPath.replace('\\', '/').trim()
+    companion object {
+        fun normalizePath(rawPath: String): String =
+            rawPath.replace('\\', '/').trim()
+    }
 }

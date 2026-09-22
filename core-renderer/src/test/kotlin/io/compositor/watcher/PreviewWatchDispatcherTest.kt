@@ -24,6 +24,7 @@ class PreviewWatchDispatcherTest {
         val registry = PreviewRegistry()
 
         val renderedIds = mutableListOf<String>()
+        val startedIds = mutableListOf<String>()
         val notifiedItems = mutableListOf<PreviewItem>()
 
         val dispatcher = PreviewWatchDispatcher(
@@ -38,6 +39,9 @@ class PreviewWatchDispatcherTest {
                 )
             }
         )
+        dispatcher.onRenderStarted = { previewId ->
+            startedIds.add(previewId)
+        }
         dispatcher.onPreviewUpdated = { item ->
             notifiedItems.add(item)
         }
@@ -71,6 +75,7 @@ class PreviewWatchDispatcherTest {
 
         // Verify renderHandler was triggered
         assertTrue(renderedIds.contains(item.id), "renderHandler should be invoked for discovered preview")
+        assertTrue(startedIds.contains(item.id), "onRenderStarted should be invoked for discovered preview")
 
         // Verify listener was notified
         assertEquals(1, notifiedItems.size)

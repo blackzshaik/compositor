@@ -10,6 +10,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
@@ -62,6 +64,7 @@ fun InspectorTopBar(
     onToggleOrientation: () -> Unit,
     onToggleInspector: () -> Unit,
     onRefresh: () -> Unit,
+    isRendering: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -156,6 +159,7 @@ fun InspectorTopBar(
                 // Refresh button
                 ElevatedButton(
                     onClick = onRefresh,
+                    enabled = !isRendering,
                     shape = RoundedCornerShape(6.dp),
                     colors = ButtonDefaults.elevatedButtonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
@@ -163,7 +167,17 @@ fun InspectorTopBar(
                     ),
                     modifier = Modifier.height(34.dp)
                 ) {
-                    Text("Render", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    if (isRendering) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(14.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Rendering...", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    } else {
+                        Text("Render", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }

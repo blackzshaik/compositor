@@ -114,7 +114,8 @@ fun CompositorApp() {
                                 }
                             }
                         }
-                    }
+                    },
+                    isRendering = state.isRendering
                 )
 
                 // Main workspace
