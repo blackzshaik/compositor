@@ -16,6 +16,8 @@ import io.compositor.viewer.models.PreviewCatalog
 import io.compositor.viewer.models.PreviewItem
 import io.compositor.viewer.models.PreviewRenderStatus
 import io.compositor.viewer.models.ViewMode
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
 
@@ -23,6 +25,7 @@ import kotlinx.serialization.json.jsonPrimitive
  * Central hoisted state holder for the Compositor Web Viewer.
  */
 class CompositorState {
+    private val json = Json { ignoreUnknownKeys = true }
     var catalog: PreviewCatalog by mutableStateOf(PreviewCatalog())
     var selectedPreviewId: String? by mutableStateOf(null)
     var searchQuery: String by mutableStateOf("")
@@ -39,7 +42,7 @@ class CompositorState {
     var matrixPreset: MatrixPreset by mutableStateOf(MatrixPreset.THEME)
     var inspectorConfig: InspectorConfig by mutableStateOf(InspectorConfig())
 
-    var zoomScale: Float by mutableFloatStateOf(1.0f)
+    var zoomScale: Float by mutableFloatStateOf(0.75f)
     var panOffsetX: Float by mutableFloatStateOf(0f)
     var panOffsetY: Float by mutableFloatStateOf(0f)
 
@@ -108,7 +111,7 @@ class CompositorState {
      * Resets canvas zoom and translation to standard viewport center.
      */
     fun resetZoomPan() {
-        zoomScale = 1.0f
+        zoomScale = 0.75f
         panOffsetX = 0f
         panOffsetY = 0f
     }
@@ -134,6 +137,7 @@ class CompositorState {
     /**
      * Dispatches incoming daemon WebSocket messages.
      */
+    @Suppress("CyclomaticComplexMethod")
     fun handleWsEvent(msg: DaemonWsMessage) {
         val payload = msg.payload
         when (msg.event) {
@@ -146,12 +150,23 @@ class CompositorState {
             "PREVIEW_UPDATED" -> {
                 val id = payload?.get("previewId")?.jsonPrimitive?.contentOrNull
                 isRendering = false
+                val ts = payload?.get("timestamp")?.jsonPrimitive?.contentOrNull?.toLongOrNull()
+                lastImageUpdateEpoch = if (ts != null && ts > lastImageUpdateEpoch) ts else lastImageUpdateEpoch + 1L
                 if (id == null || id == selectedPreviewId) {
                     activeError = null
-                    lastImageUpdateEpoch = (payload?.get("timestamp")?.jsonPrimitive?.contentOrNull?.toLongOrNull()
-                        ?: 1L)
                 }
-                updatePreviewStatusInCatalog(id, PreviewRenderStatus.RENDERED)
+                val previewJson = payload?.get("preview")
+                if (previewJson != null && id != null) {
+                    try {
+                        val parsed = json.decodeFromJsonElement<PreviewItem>(previewJson)
+                        val updatedMap = catalog.previews.toMutableMap().apply { put(id, parsed) }
+                        catalog = catalog.copy(previews = updatedMap)
+                    } catch (_: Exception) {
+                        updatePreviewStatusInCatalog(id, PreviewRenderStatus.RENDERED)
+                    }
+                } else {
+                    updatePreviewStatusInCatalog(id, PreviewRenderStatus.RENDERED)
+                }
             }
             "RENDER_ERROR" -> {
                 isRendering = false

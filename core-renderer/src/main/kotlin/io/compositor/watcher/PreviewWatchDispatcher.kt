@@ -8,6 +8,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -25,6 +26,11 @@ class PreviewWatchDispatcher(
 
     private val isRunning = AtomicBoolean(false)
     private var dispatchJob: Job? = null
+
+    /**
+     * Optional listener invoked when a source file changes before parsing/rendering.
+     */
+    var onSourceChanged: ((File) -> Unit)? = null
 
     /**
      * Optional listener invoked when an affected preview has been parsed or re-rendered.
@@ -60,12 +66,29 @@ class PreviewWatchDispatcher(
             extension == "kt" -> {
                 processKotlinFileChange(event)
             }
+            extension == "class" -> {
+                processClassFileChange(event)
+            }
             else -> emptyList()
         }
     }
 
+    private suspend fun processClassFileChange(event: FileChangeEvent): List<PreviewItem> {
+        val allItems = previewRegistry.getCatalog().previews.values.toList()
+        for (item in allItems) {
+            val renderedItem = if (renderHandler != null) {
+                renderHandler.invoke(item.id) ?: item
+            } else {
+                item
+            }
+            onPreviewUpdated?.invoke(renderedItem)
+        }
+        return allItems
+    }
+
     private suspend fun processKotlinFileChange(event: FileChangeEvent): List<PreviewItem> {
         val content = FileReadHelper.readTextWithRetry(event.file) ?: return emptyList()
+        onSourceChanged?.invoke(event.file)
         val definitions = scanner.parseSource(content, event.file.invariantSeparatorsPath)
         val updatedItems = previewRegistry.updateFilePreviews(
             filePath = event.file.invariantSeparatorsPath,

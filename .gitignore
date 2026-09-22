@@ -61,3 +61,5 @@ pnpm-debug.log*
 .compositor/
 *.preview.png
 preview-cache/
+bin/
+*/bin/

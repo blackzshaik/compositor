@@ -201,7 +201,7 @@ private fun PreviewSidebarCard(
 
             val groupText = item.definition.parameters.group
             val lineText = "L:${item.definition.line}"
-            val subText = if (!groupText.isNullOrBlank()) "$groupText • $lineText" else lineText
+            val subText = if (!groupText.isNullOrBlank()) "$groupText | $lineText" else lineText
 
             Spacer(modifier = Modifier.height(4.dp))
             Text(

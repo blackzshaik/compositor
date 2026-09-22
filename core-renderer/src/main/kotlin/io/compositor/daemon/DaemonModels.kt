@@ -52,7 +52,8 @@ data class DaemonWsMessage(
         fun previewUpdated(
             previewId: String,
             imageUrl: String,
-            timestamp: Long = System.currentTimeMillis()
+            timestamp: Long = System.currentTimeMillis(),
+            preview: PreviewItem? = null
         ): DaemonWsMessage =
             DaemonWsMessage(
                 event = "PREVIEW_UPDATED",
@@ -61,6 +62,7 @@ data class DaemonWsMessage(
                     put("url", imageUrl)
                     put("timestamp", timestamp)
                     put("status", "Rendered")
+                    preview?.let { put("preview", json.encodeToJsonElement(it)) }
                 }
             )
 

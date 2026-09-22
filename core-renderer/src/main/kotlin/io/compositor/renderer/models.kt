@@ -1,5 +1,6 @@
 package io.compositor.renderer
 
+import kotlinx.serialization.Serializable
 import java.io.File
 
 /**
@@ -72,6 +73,7 @@ data class CompositorDeviceConfig(
 /**
  * Element coordinate bounds extracted from the LayoutLib render hierarchy.
  */
+@Serializable
 data class ElementBounds(
     val className: String,
     val left: Int,

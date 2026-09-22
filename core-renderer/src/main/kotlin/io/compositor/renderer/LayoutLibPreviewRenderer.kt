@@ -26,10 +26,10 @@ class LayoutLibPreviewRenderer(
      * Executes headless rendering for the requested Composable preview.
      */
     @Suppress("TooGenericExceptionCaught")
-    fun render(request: RenderRequest): RenderResult {
+    fun render(request: RenderRequest): RenderResult = synchronized(RENDER_LOCK) {
         val startTime = System.currentTimeMillis()
 
-        return try {
+        try {
             resetSdkState()
             LayoutLibBootstrap.ensureInitialized(customRuntimeRoot)
 
@@ -39,6 +39,7 @@ class LayoutLibPreviewRenderer(
                 Thread.currentThread().contextClassLoader ?: javaClass.classLoader
             }
 
+            AndroidBuildBootstrap.initializeBuildFields(classLoader)
             val originalClassLoader = Thread.currentThread().contextClassLoader
             Thread.currentThread().contextClassLoader = classLoader
 
@@ -201,5 +202,9 @@ class LayoutLibPreviewRenderer(
             height = height,
             children = children
         )
+    }
+
+    companion object {
+        private val RENDER_LOCK = Any()
     }
 }

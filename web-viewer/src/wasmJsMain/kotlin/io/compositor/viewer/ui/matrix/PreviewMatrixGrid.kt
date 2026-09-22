@@ -2,7 +2,6 @@ package io.compositor.viewer.ui.matrix
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,7 +26,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -115,12 +113,6 @@ fun PreviewMatrixGrid(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .pointerInput(Unit) {
-                    detectDragGestures { change, dragAmount ->
-                        change.consume()
-                        onPan(dragAmount.x, dragAmount.y)
-                    }
-                }
                 .graphicsLayer {
                     scaleX = zoomScale
                     scaleY = zoomScale
@@ -220,41 +212,41 @@ private fun computeMatrixVariants(
     preset: MatrixPreset,
     getImageUrl: (String) -> String
 ): List<MatrixCellVariant> {
-    if (selected == null) return emptyList()
+    val targetItem = selected ?: all.firstOrNull() ?: return emptyList()
 
     return when (preset) {
         MatrixPreset.THEME -> {
             listOf(
                 MatrixCellVariant(
-                    title = selected.definition.functionName,
+                    title = targetItem.definition.functionName,
                     subtitle = "Light Mode",
-                    previewId = selected.id,
-                    imageUrl = getImageUrl(selected.id)
+                    previewId = targetItem.id,
+                    imageUrl = getImageUrl(targetItem.id)
                 ),
                 MatrixCellVariant(
-                    title = selected.definition.functionName,
+                    title = targetItem.definition.functionName,
                     subtitle = "Dark Mode",
-                    previewId = selected.id,
-                    imageUrl = "${getImageUrl(selected.id)}&theme=dark"
+                    previewId = targetItem.id,
+                    imageUrl = "${getImageUrl(targetItem.id)}&theme=dark"
                 )
             )
         }
         MatrixPreset.FONT_SCALE -> {
             listOf(0.85f, 1.0f, 1.15f, 1.5f).map { scale ->
                 MatrixCellVariant(
-                    title = selected.definition.functionName,
+                    title = targetItem.definition.functionName,
                     subtitle = "${scale}x Typography",
-                    previewId = selected.id,
-                    imageUrl = "${getImageUrl(selected.id)}&fontScale=$scale"
+                    previewId = targetItem.id,
+                    imageUrl = "${getImageUrl(targetItem.id)}&fontScale=$scale"
                 )
             }
         }
         MatrixPreset.GROUP -> {
-            val groupName = selected.definition.parameters.group
+            val groupName = targetItem.definition.parameters.group
             val groupPreviews = if (!groupName.isNullOrBlank()) {
                 all.filter { it.definition.parameters.group == groupName }
             } else {
-                listOf(selected)
+                all.ifEmpty { listOf(targetItem) }
             }
             groupPreviews.map { item ->
                 MatrixCellVariant(

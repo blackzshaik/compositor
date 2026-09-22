@@ -62,7 +62,8 @@ data class PreviewItem(
     val lastRenderedAt: Long? = null,
     val errorDetails: String? = null,
     val imagePath: String? = null,
-    val imageUrl: String? = null
+    val imageUrl: String? = null,
+    val rootBounds: ElementBounds? = null
 )
 
 /**

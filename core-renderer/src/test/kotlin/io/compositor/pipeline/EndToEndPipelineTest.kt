@@ -153,4 +153,106 @@ class EndToEndPipelineTest {
         )
         return candidates.firstOrNull { it.exists() }
     }
+
+    private fun resolveSampleCompileClasspath(): List<File> {
+        val classpath = mutableListOf<File>()
+        val compileDir = System.getProperty("compositor.sample.compile.dir")?.let { File(it) }
+            ?: File("../samples/sample-app/build/compositor/compile-jars").takeIf { it.exists() }
+            ?: File("samples/sample-app/build/compositor/compile-jars").takeIf { it.exists() }
+        compileDir?.listFiles()?.filter { it.extension == "jar" }?.let { classpath.addAll(it) }
+
+        val extractedDir = File("../samples/sample-app/build/compositor/extracted-jars").takeIf { it.exists() }
+            ?: File("samples/sample-app/build/compositor/extracted-jars").takeIf { it.exists() }
+        extractedDir?.listFiles()?.filter { it.extension == "jar" }?.let { classpath.addAll(it) }
+
+        val androidJarProp = System.getProperty("compositor.sample.android.jar")
+        if (androidJarProp != null && File(androidJarProp).exists()) {
+            classpath.add(File(androidJarProp))
+        }
+        return classpath
+    }
+
+    @Test
+    @Suppress("LongMethod")
+    fun `end to end pipeline hot reloads source changes and reports compilation errors`() {
+        val sampleClassesDir = resolveSampleClassesDir() ?: return
+        val sampleResDir = resolveSampleResourcesDir()
+        val sampleRJar = resolveSampleRJar()
+        val sampleSrcDir = resolveSampleSrcDir() ?: return
+        val compileClasspath = resolveSampleCompileClasspath()
+        if (compileClasspath.isEmpty()) return
+
+        val srcDir = File(tempDir, "src/com/compositor/sample").apply { mkdirs() }
+        val greetingFile = File(srcDir, "Greeting.kt")
+        val originalSrc = File(sampleSrcDir, "com/compositor/sample/Greeting.kt")
+        if (!originalSrc.exists()) return
+        originalSrc.copyTo(greetingFile, overwrite = true)
+
+        val testPort = 3089
+        val outputDir = File(tempDir, "previews").apply { mkdirs() }
+        val outClassesDir = File(tempDir, "test-classes").apply { mkdirs() }
+        sampleClassesDir.copyRecursively(outClassesDir, overwrite = true)
+
+        val config = PipelineConfig(
+            projectRoot = tempDir,
+            port = testPort,
+            watchRoots = listOf(File(tempDir, "src")),
+            classesDirs = listOf(outClassesDir),
+            compileClasspath = compileClasspath,
+            resourceDirs = listOfNotNull(sampleResDir?.takeIf { it.exists() }),
+            rJar = sampleRJar?.takeIf { it.exists() },
+            outputDir = outputDir
+        )
+
+        val pipeline = CompositorPipeline(config)
+        try {
+            pipeline.start(autoRender = false)
+            val catalog = pipeline.previewRegistry.getCatalog()
+            val previewId = catalog.previews.keys.firstOrNull { it.contains("GreetingPreview") }
+            assertNotNull(previewId, "GreetingPreview must be discovered")
+
+            // 1. Initial render succeeds
+            val initial = pipeline.renderPreview(previewId!!)
+            assertEquals(PreviewRenderStatus.RENDERED, initial?.status)
+
+            // 2. Modify source with valid code and force newer timestamp
+            greetingFile.writeText(greetingFile.readText().replace("Welcome to", "HotReload to"))
+            greetingFile.setLastModified(System.currentTimeMillis() + 5000)
+            Thread.sleep(400)
+
+            val updated = pipeline.renderPreview(previewId)
+            assertEquals(
+                PreviewRenderStatus.RENDERED,
+                updated?.status,
+                "Expected RENDERED but got: ${updated?.errorDetails}"
+            )
+
+            // 3. Introduce a compilation error
+            greetingFile.writeText(greetingFile.readText() + "\nval brokenRef: String = nonExistentVariable\n")
+            greetingFile.setLastModified(System.currentTimeMillis() + 10000)
+            Thread.sleep(400)
+
+            val errorItem = pipeline.renderPreview(previewId)
+            assertEquals(
+                PreviewRenderStatus.ERROR,
+                errorItem?.status,
+                "Expected ERROR but got: ${errorItem?.status}"
+            )
+            assertTrue(
+                errorItem?.errorDetails?.contains("unresolved reference") == true ||
+                    errorItem?.errorDetails?.contains("Unresolved reference") == true,
+                "Error details should report unresolved reference: ${errorItem?.errorDetails}"
+            )
+
+            // 4. Fix the error
+            greetingFile.writeText(originalSrc.readText())
+            greetingFile.setLastModified(System.currentTimeMillis() + 15000)
+            Thread.sleep(400)
+
+            val recoveredItem = pipeline.renderPreview(previewId)
+            assertEquals(PreviewRenderStatus.RENDERED, recoveredItem?.status)
+        } finally {
+            pipeline.stop()
+        }
+    }
 }

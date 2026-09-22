@@ -54,10 +54,13 @@ dependencies {
 tasks.register("exportDebugClasspath") {
     dependsOn("compileDebugKotlin", "processDebugResources")
     val runtimeClasspath = configurations.named("debugRuntimeClasspath")
+    val compileClasspath = configurations.named("debugCompileClasspath")
     val outputDir = layout.buildDirectory.dir("compositor/extracted-jars")
+    val compileOutputDir = layout.buildDirectory.dir("compositor/compile-jars")
     outputs.dir(outputDir)
+    outputs.dir(compileOutputDir)
     doLast {
-        val artifactView = runtimeClasspath.get().incoming.artifactView {
+        val runtimeArtifactView = runtimeClasspath.get().incoming.artifactView {
             attributes {
                 attribute(
                     org.gradle.api.attributes.Attribute.of("artifactType", String::class.java),
@@ -67,7 +70,7 @@ tasks.register("exportDebugClasspath") {
         }
         val targetDir = outputDir.get().asFile
         targetDir.mkdirs()
-        artifactView.artifacts.artifactFiles.files.forEachIndexed { index, file ->
+        runtimeArtifactView.artifacts.artifactFiles.files.forEachIndexed { index, file ->
             val destName = "${index}_${file.name}"
             file.copyTo(File(targetDir, destName), overwrite = true)
         }
@@ -76,6 +79,24 @@ tasks.register("exportDebugClasspath") {
         ).get().asFile
         if (rJar.exists()) {
             rJar.copyTo(File(targetDir, "R.jar"), overwrite = true)
+        }
+
+        val compileArtifactView = compileClasspath.get().incoming.artifactView {
+            attributes {
+                attribute(
+                    org.gradle.api.attributes.Attribute.of("artifactType", String::class.java),
+                    "android-classes-jar"
+                )
+            }
+        }
+        val compileTargetDir = compileOutputDir.get().asFile
+        compileTargetDir.mkdirs()
+        compileArtifactView.artifacts.artifactFiles.files.forEachIndexed { index, file ->
+            val destName = "${index}_${file.name}"
+            file.copyTo(File(compileTargetDir, destName), overwrite = true)
+        }
+        if (rJar.exists()) {
+            rJar.copyTo(File(compileTargetDir, "R.jar"), overwrite = true)
         }
     }
 }

@@ -20,7 +20,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.serialization.json.Json
 import kotlin.coroutines.coroutineContext
 
-private fun jsDateNow(): Double = js("Date.now()")
+fun jsDateNow(): Double = js("Date.now()")
 
 /**
  * Pure Kotlin Ktor client communicating with the Compositor preview daemon
@@ -30,6 +30,8 @@ class CompositorClient(
     val baseUrl: String = resolveDefaultBaseUrl(),
     val wsUrl: String = resolveDefaultWsUrl()
 ) {
+    fun nowEpoch(): Long = jsDateNow().toLong()
+
     private val json = Json {
         ignoreUnknownKeys = true
         encodeDefaults = true
@@ -59,9 +61,9 @@ class CompositorClient(
     /**
      * Constructs the cache-busted URL for a preview image.
      */
-    fun getPreviewImageUrl(previewId: String): String {
+    fun getPreviewImageUrl(previewId: String, epoch: Long = 0L): String {
         cacheBuster++
-        val timestamp = jsDateNow().toLong()
+        val timestamp = if (epoch > 0L) epoch else jsDateNow().toLong()
         return "$baseUrl/api/previews/$previewId/image?t=${timestamp}_$cacheBuster"
     }
 

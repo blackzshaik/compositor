@@ -36,6 +36,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.compositor.viewer.models.ElementBounds
 
+import androidx.compose.foundation.layout.BoxWithConstraints
+
 /**
  * Interactive canvas overlay drawing element bounding boxes and handling element inspection.
  */
@@ -51,59 +53,68 @@ fun ElementInspectorOverlay(
 ) {
     if (!isInspectorMode) return
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .pointerInput(rootBounds) {
-                awaitPointerEventScope {
-                    while (true) {
-                        val event = awaitPointerEvent()
-                        if (event.type == PointerEventType.Move) {
-                            val pos = event.changes.firstOrNull()?.position
-                            if (pos != null && rootBounds != null) {
-                                val match = findDeepestMatch(rootBounds, pos.x, pos.y)
-                                onHoverElement(match)
+    BoxWithConstraints(
+        modifier = modifier.fillMaxSize()
+    ) {
+        val containerW = constraints.maxWidth.toFloat()
+        val containerH = constraints.maxHeight.toFloat()
+        val scaleX = if (rootBounds != null && rootBounds.width > 0) containerW / rootBounds.width else 1f
+        val scaleY = if (rootBounds != null && rootBounds.height > 0) containerH / rootBounds.height else 1f
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInput(rootBounds, scaleX, scaleY) {
+                    awaitPointerEventScope {
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            if (event.type == PointerEventType.Move) {
+                                val pos = event.changes.firstOrNull()?.position
+                                if (pos != null && rootBounds != null) {
+                                    val match = findDeepestMatch(rootBounds, pos.x / scaleX, pos.y / scaleY)
+                                    onHoverElement(match)
+                                }
                             }
                         }
                     }
                 }
-            }
-            .pointerInput(rootBounds) {
-                detectTapGestures { offset ->
-                    if (rootBounds != null) {
-                        val match = findDeepestMatch(rootBounds, offset.x, offset.y)
-                        onSelectElement(match)
+                .pointerInput(rootBounds, scaleX, scaleY) {
+                    detectTapGestures { offset ->
+                        if (rootBounds != null) {
+                            val match = findDeepestMatch(rootBounds, offset.x / scaleX, offset.y / scaleY)
+                            onSelectElement(match)
+                        }
                     }
                 }
-            }
-    ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            hoveredBounds?.let { b ->
-                drawRect(
-                    color = Color(0x334285F4),
-                    topLeft = Offset(b.left.toFloat(), b.top.toFloat()),
-                    size = Size(b.width.toFloat(), b.height.toFloat())
-                )
-                drawRect(
-                    color = Color(0xFF4285F4),
-                    topLeft = Offset(b.left.toFloat(), b.top.toFloat()),
-                    size = Size(b.width.toFloat(), b.height.toFloat()),
-                    style = Stroke(width = 2.dp.toPx())
-                )
-            }
+        ) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                hoveredBounds?.let { b ->
+                    drawRect(
+                        color = Color(0x334285F4),
+                        topLeft = Offset(b.left.toFloat() * scaleX, b.top.toFloat() * scaleY),
+                        size = Size(b.width.toFloat() * scaleX, b.height.toFloat() * scaleY)
+                    )
+                    drawRect(
+                        color = Color(0xFF4285F4),
+                        topLeft = Offset(b.left.toFloat() * scaleX, b.top.toFloat() * scaleY),
+                        size = Size(b.width.toFloat() * scaleX, b.height.toFloat() * scaleY),
+                        style = Stroke(width = 2.dp.toPx())
+                    )
+                }
 
-            selectedBounds?.let { b ->
-                drawRect(
-                    color = Color(0x4434A853),
-                    topLeft = Offset(b.left.toFloat(), b.top.toFloat()),
-                    size = Size(b.width.toFloat(), b.height.toFloat())
-                )
-                drawRect(
-                    color = Color(0xFF34A853),
-                    topLeft = Offset(b.left.toFloat(), b.top.toFloat()),
-                    size = Size(b.width.toFloat(), b.height.toFloat()),
-                    style = Stroke(width = 3.dp.toPx())
-                )
+                selectedBounds?.let { b ->
+                    drawRect(
+                        color = Color(0x4434A853),
+                        topLeft = Offset(b.left.toFloat() * scaleX, b.top.toFloat() * scaleY),
+                        size = Size(b.width.toFloat() * scaleX, b.height.toFloat() * scaleY)
+                    )
+                    drawRect(
+                        color = Color(0xFF34A853),
+                        topLeft = Offset(b.left.toFloat() * scaleX, b.top.toFloat() * scaleY),
+                        size = Size(b.width.toFloat() * scaleX, b.height.toFloat() * scaleY),
+                        style = Stroke(width = 3.dp.toPx())
+                    )
+                }
             }
         }
     }
@@ -144,7 +155,7 @@ fun ElementInspectorSheet(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "✕",
+                    text = "X",
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.clickable(onClick = onClose)

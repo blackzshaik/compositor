@@ -239,7 +239,7 @@ class CompositorDaemon(
 
         if (updatedItem != null && updatedItem.status == PreviewRenderStatus.RENDERED) {
             val imageUrl = updatedItem.imageUrl ?: "/api/previews/$previewId/image"
-            broadcast(DaemonWsMessage.previewUpdated(previewId, imageUrl))
+            broadcast(DaemonWsMessage.previewUpdated(previewId, imageUrl, preview = updatedItem))
             call.respond(
                 HttpStatusCode.OK,
                 RenderResponse(success = true, previewId = previewId, preview = updatedItem)
@@ -318,7 +318,7 @@ class CompositorDaemon(
         )
         dispatcher.onPreviewUpdated = { item ->
             val imageUrl = item.imageUrl ?: "/api/previews/${item.id}/image"
-            broadcast(DaemonWsMessage.previewUpdated(item.id, imageUrl))
+            broadcast(DaemonWsMessage.previewUpdated(item.id, imageUrl, preview = item))
         }
         dispatcher.start()
         this.watcherDispatcher = dispatcher

@@ -95,12 +95,23 @@ fun CompositorApp() {
                     onToggleTheme = { state.toggleTheme() },
                     onFontScaleChange = { state.setFontScale(it) },
                     onToggleOrientation = { state.toggleOrientation() },
-                    onToggleInspector = { state.toggleInspectorMode() },
+                    onToggleInspector = {
+                        state.toggleInspectorMode()
+                        if (state.isInspectorMode && state.selectedBounds == null) {
+                            state.selectedBounds = state.selectedPreview?.rootBounds
+                        }
+                    },
                     onRefresh = {
-                        state.selectedPreviewId?.let { id ->
+                        val targetId = state.selectedPreviewId ?: state.catalog.previews.keys.firstOrNull()
+                        targetId?.let { id ->
                             scope.launch {
                                 state.isRendering = true
-                                client.triggerRender(id)
+                                try {
+                                    client.triggerRender(id)
+                                } finally {
+                                    state.isRendering = false
+                                    state.lastImageUpdateEpoch = client.nowEpoch()
+                                }
                             }
                         }
                     }
@@ -124,7 +135,10 @@ fun CompositorApp() {
                     Box(modifier = Modifier.weight(1f)) {
                         if (state.viewMode == ViewMode.SINGLE) {
                             val activeItem = state.selectedPreview
-                            val imgUrl = activeItem?.let { client.getPreviewImageUrl(it.id) }
+                            val imgUrl = activeItem?.let {
+                                client.getPreviewImageUrl(it.id, state.lastImageUpdateEpoch)
+                            }
+                            val rootBounds = activeItem?.rootBounds
                             PreviewCanvas(
                                 previewItem = activeItem,
                                 imageUrl = imgUrl,
@@ -138,9 +152,10 @@ fun CompositorApp() {
                                     state.panOffsetX += dx
                                     state.panOffsetY += dy
                                 },
+                                isInspectorMode = state.isInspectorMode,
                                 overlayContent = {
                                     ElementInspectorOverlay(
-                                        rootBounds = null,
+                                        rootBounds = rootBounds,
                                         isInspectorMode = state.isInspectorMode,
                                         hoveredBounds = state.hoveredBounds,
                                         selectedBounds = state.selectedBounds,
@@ -167,7 +182,7 @@ fun CompositorApp() {
                                     state.viewMode = ViewMode.SINGLE
                                 },
                                 onPresetChange = { state.matrixPreset = it },
-                                getImageUrl = { id -> client.getPreviewImageUrl(id) }
+                                getImageUrl = { id -> client.getPreviewImageUrl(id, state.lastImageUpdateEpoch) }
                             )
                         }
                     }

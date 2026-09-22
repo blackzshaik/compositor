@@ -70,7 +70,8 @@ class PreviewRegistry(private val storageFile: File? = null) {
                 lastRenderedAt = existing?.lastRenderedAt,
                 errorDetails = existing?.errorDetails,
                 imagePath = existing?.imagePath,
-                imageUrl = existing?.imageUrl
+                imageUrl = existing?.imageUrl,
+                rootBounds = existing?.rootBounds
             )
             items[id] = item
             updatedList.add(item)
@@ -125,7 +126,8 @@ class PreviewRegistry(private val storageFile: File? = null) {
             lastRenderedAt = System.currentTimeMillis(),
             imagePath = update.imagePath ?: current.imagePath,
             imageUrl = update.imageUrl ?: current.imageUrl,
-            errorDetails = update.errorDetails
+            errorDetails = update.errorDetails,
+            rootBounds = update.rootBounds ?: current.rootBounds
         )
         items[previewId] = updated
         storageFile?.let { persist(it) }

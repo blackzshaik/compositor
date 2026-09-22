@@ -72,6 +72,7 @@ class CompositorPlugin : Plugin<Project> {
         extension: CompositorExtension,
         tasks: List<org.gradle.api.tasks.TaskProvider<*>>
     ) {
+        val runtimeConfig = project.configurations.findByName(COMPOSITOR_RUNTIME_CONFIG)
         project.afterEvaluate {
             val variantName = extension.variantName.getOrElse("debug")
             val capVariant = variantName.replaceFirstChar {
@@ -81,12 +82,18 @@ class CompositorPlugin : Plugin<Project> {
             val compileKotlin = project.tasks.findByName("compile${capVariant}Kotlin")
             val processRes = project.tasks.findByName("process${capVariant}Resources")
             val mergeRes = project.tasks.findByName("merge${capVariant}Resources")
+            val coreRenderer = project.rootProject.findProject(":core-renderer")
+            val coreJar = coreRenderer?.tasks?.findByName("jar")
+            val coreRes = coreRenderer?.tasks?.findByName("processResources")
 
             for (taskProvider in tasks) {
                 taskProvider.configure { task ->
                     compileKotlin?.let { task.dependsOn(it) }
                     processRes?.let { task.dependsOn(it) }
                     mergeRes?.let { task.dependsOn(it) }
+                    runtimeConfig?.let { task.dependsOn(it) }
+                    coreJar?.let { task.dependsOn(it) }
+                    coreRes?.let { task.dependsOn(it) }
                 }
             }
         }

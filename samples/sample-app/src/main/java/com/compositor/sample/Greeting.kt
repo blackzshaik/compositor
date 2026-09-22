@@ -15,11 +15,11 @@ import androidx.compose.ui.unit.sp
 fun Greeting(name: String, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
-            .background(Color(0xFF000022))
+            .background(Color(0xFF232323))
             .padding(24.dp)
     ) {
         Text(
-            text = "Welcome to the Future of Android, $name!",
+            text = "Welcome to the Future of Android Compose Design, $name!",
             color = Color.White,
             fontSize = 20.sp
         )
@@ -29,5 +29,12 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
-    Greeting("Blackz ")
+    Greeting("Is this thing working")
+}
+
+
+@Preview(showBackground = true)
+@Composable
+fun GreetingPreview2() {
+    Greeting("Shaik")
 }

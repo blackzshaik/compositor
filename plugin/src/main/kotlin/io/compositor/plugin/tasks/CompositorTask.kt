@@ -41,6 +41,13 @@ abstract class CompositorTask : DefaultTask() {
         val rootEscaped = escape(context.projectRoot.absolutePath)
         val watchEscaped = context.watchRoots.joinToString(",") { "\"${escape(it.absolutePath)}\"" }
         val classesEscaped = context.allClasspathFiles().joinToString(",") { "\"${escape(it.absolutePath)}\"" }
+        val compileCp = mutableListOf<File>()
+        compileCp.addAll(context.compiledClassesDirs.filter { it.exists() })
+        compileCp.addAll(context.compileClasspathFiles.filter { it.exists() })
+        compileCp.addAll(context.dependencyClasspathFiles.filter { it.exists() })
+        context.rJar?.let { if (it.exists()) compileCp.add(it) }
+        context.androidJar?.let { if (it.exists()) compileCp.add(it) }
+        val compileEscaped = compileCp.joinToString(",") { "\"${escape(it.absolutePath)}\"" }
         val resEscaped = context.mergedResourceDirs.joinToString(",") { "\"${escape(it.absolutePath)}\"" }
         val rJarEscaped = context.rJar?.let { "\"${escape(it.absolutePath)}\"" } ?: "null"
         val layoutLibEscaped = context.layoutLibDataDir?.let { "\"${escape(it.absolutePath)}\"" } ?: "null"
@@ -54,6 +61,7 @@ abstract class CompositorTask : DefaultTask() {
               "port": ${port.get()},
               "watchRoots": [$watchEscaped],
               "classesDirs": [$classesEscaped],
+              "compileClasspath": [$compileEscaped],
               "resourceDirs": [$resEscaped],
               "rJar": $rJarEscaped,
               "layoutLibDataDir": $layoutLibEscaped,

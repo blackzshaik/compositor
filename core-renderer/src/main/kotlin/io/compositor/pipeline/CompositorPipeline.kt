@@ -1,5 +1,7 @@
 package io.compositor.pipeline
 
+import io.compositor.compiler.CompilationResult
+import io.compositor.compiler.KotlinSourceCompiler
 import io.compositor.daemon.CompositorDaemon
 import io.compositor.daemon.DaemonWsMessage
 import io.compositor.parser.KotlinPsiPreviewScanner
@@ -19,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -29,6 +32,7 @@ data class PipelineConfig(
     val port: Int = CompositorDaemon.DEFAULT_PORT,
     val watchRoots: List<File> = listOf(File(projectRoot, "src")),
     val classesDirs: List<File> = emptyList(),
+    val compileClasspath: List<File> = emptyList(),
     val resourceDirs: List<File> = emptyList(),
     val rJar: File? = null,
     val outputDir: File = File(projectRoot, ".compositor/previews")
@@ -71,12 +75,93 @@ class CompositorPipeline(
         return "$pkg${baseName}Kt"
     }
 
+    private data class CompileCacheEntry(
+        val lastModified: Long,
+        val length: Long,
+        val result: CompilationResult
+    )
+
+    private val compileCache = ConcurrentHashMap<String, CompileCacheEntry>()
+
+    private fun isSourceEligible(file: File): Boolean =
+        file.exists() && file.isFile && file.extension == "kt"
+
+    private fun isClassUpToDate(def: PreviewDefinition, outDir: File, lastMod: Long): Boolean {
+        val className = resolveClassName(def)
+        val classRelativePath = className.replace('.', File.separatorChar) + ".class"
+        val classFile = File(outDir, classRelativePath)
+        return classFile.exists() && classFile.lastModified() >= lastMod
+    }
+
+    private fun buildCompileClasspath(): List<File> {
+        val cp = mutableListOf<File>()
+        cp.addAll(config.classesDirs)
+        for (f in config.compileClasspath) {
+            if (!cp.contains(f)) {
+                cp.add(f)
+            }
+        }
+        val compileJarsDir = File(config.projectRoot, "build/compositor/compile-jars")
+        if (compileJarsDir.exists() && compileJarsDir.isDirectory) {
+            compileJarsDir.listFiles()?.filter { it.extension == "jar" }?.forEach { f ->
+                if (!cp.contains(f)) cp.add(f)
+            }
+        }
+        config.rJar?.let { if (it.exists() && !cp.contains(it)) cp.add(it) }
+        return cp
+    }
+
+    private fun compileSourceIfNeeded(
+        sourceFile: File,
+        def: PreviewDefinition? = null
+    ): CompilationResult? {
+        if (!isSourceEligible(sourceFile)) return null
+        val lastMod = sourceFile.lastModified()
+        val fileLength = sourceFile.length()
+        val cached = compileCache[sourceFile.canonicalPath]
+        if (cached != null && cached.lastModified == lastMod && cached.length == fileLength) {
+            return cached.result
+        }
+
+        val outDir = config.classesDirs.firstOrNull { it.isDirectory }
+            ?: File(config.projectRoot, "build/tmp/kotlin-classes/debug")
+
+        if (def != null && isClassUpToDate(def, outDir, lastMod)) {
+            val result = CompilationResult(isSuccess = true)
+            compileCache[sourceFile.canonicalPath] = CompileCacheEntry(lastMod, fileLength, result)
+            return result
+        }
+
+        val cp = buildCompileClasspath()
+        val result = KotlinSourceCompiler.compile(
+            sourceFile = sourceFile,
+            outputDir = outDir,
+            classpath = cp
+        )
+        compileCache[sourceFile.canonicalPath] = CompileCacheEntry(lastMod, fileLength, result)
+        return result
+    }
+
     /**
      * Renders a specific preview in-memory using LayoutLib and updates the catalog.
      */
+    @Synchronized
     fun renderPreview(previewId: String): PreviewItem? {
         val item = previewRegistry.getCatalog().previews[previewId] ?: return null
         val def = item.definition
+        val sourceFile = File(def.filePath)
+        val compileResult = compileSourceIfNeeded(sourceFile, def)
+        if (compileResult != null && !compileResult.isSuccess) {
+            val errorMsg = compileResult.errorMessages.joinToString("\n")
+            return previewRegistry.updateRenderStatus(
+                previewId = previewId,
+                update = RenderStateUpdate(
+                    status = PreviewRenderStatus.ERROR,
+                    errorDetails = errorMsg
+                )
+            )
+        }
+
         val className = resolveClassName(def)
 
         val classpathList = mutableListOf<File>()
@@ -104,7 +189,8 @@ class CompositorPipeline(
                         status = PreviewRenderStatus.RENDERED,
                         durationMs = result.durationMs,
                         imagePath = result.imageFile.absolutePath,
-                        imageUrl = "/api/previews/$previewId/image"
+                        imageUrl = "/api/previews/$previewId/image",
+                        rootBounds = result.rootBounds
                     )
                 )
             }
@@ -152,6 +238,7 @@ class CompositorPipeline(
      * Starts the pipeline, registers previews, launches the Ktor daemon,
      * and activates the coroutine source file watcher.
      */
+    @Suppress("TooGenericExceptionCaught")
     @Synchronized
     fun start(autoRender: Boolean = true): CompositorPipeline {
         if (isRunning.compareAndSet(false, true)) {
@@ -161,7 +248,11 @@ class CompositorPipeline(
 
             if (autoRender) {
                 for (item in items) {
-                    renderPreview(item.id)
+                    try {
+                        renderPreview(item.id)
+                    } catch (e: Exception) {
+                        System.err.println("Compositor: Initial render failed for ${item.id}: ${e.message}")
+                    }
                 }
             }
 
@@ -174,10 +265,20 @@ class CompositorPipeline(
                     scanner = scanner,
                     renderHandler = { previewId -> renderPreview(previewId) }
                 )
+                disp.onSourceChanged = { file -> compileSourceIfNeeded(file) }
                 disp.onPreviewUpdated = { updatedItem ->
-                    val url = updatedItem.imageUrl ?: "/api/previews/${updatedItem.id}/image"
-                    scope.launch {
-                        daemon.broadcast(DaemonWsMessage.previewUpdated(updatedItem.id, url))
+                    if (updatedItem.status == PreviewRenderStatus.ERROR) {
+                        val errorMsg = updatedItem.errorDetails ?: "Render failed"
+                        scope.launch {
+                            daemon.broadcast(DaemonWsMessage.renderError(updatedItem.id, errorMsg))
+                        }
+                    } else {
+                        val url = updatedItem.imageUrl ?: "/api/previews/${updatedItem.id}/image"
+                        scope.launch {
+                            daemon.broadcast(
+                                DaemonWsMessage.previewUpdated(updatedItem.id, url, preview = updatedItem)
+                            )
+                        }
                     }
                 }
                 disp.start()

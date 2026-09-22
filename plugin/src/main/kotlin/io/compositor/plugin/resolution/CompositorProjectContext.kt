@@ -11,6 +11,7 @@ data class CompositorProjectContext(
     val variantName: String,
     val compiledClassesDirs: List<File> = emptyList(),
     val dependencyClasspathFiles: List<File> = emptyList(),
+    val compileClasspathFiles: List<File> = emptyList(),
     val mergedResourceDirs: List<File> = emptyList(),
     val rJar: File? = null,
     val androidJar: File? = null,

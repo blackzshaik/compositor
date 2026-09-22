@@ -26,12 +26,13 @@ kotlin {
                 implementation(compose.material3)
                 implementation(compose.ui)
                 implementation(compose.components.resources)
-                implementation(libs.kotlinx.coroutines.core)
-                implementation(libs.kotlinx.serialization.json)
-                implementation(libs.ktor.client.core)
-                implementation(libs.ktor.client.websockets)
-                implementation(libs.ktor.client.content.negotiation)
-                implementation(libs.ktor.serialization.kotlinx.json)
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-wasm-js:1.10.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json-wasm-js:1.7.3")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-core-wasm-js:1.7.3")
+                implementation("io.ktor:ktor-client-core-wasm-js:3.0.3")
+                implementation("io.ktor:ktor-client-websockets-wasm-js:3.0.3")
+                implementation("io.ktor:ktor-client-content-negotiation-wasm-js:3.0.3")
+                implementation("io.ktor:ktor-serialization-kotlinx-json-wasm-js:3.0.3")
             }
         }
     }
@@ -44,3 +45,14 @@ dependencies {
 detekt {
     source.setFrom("src/wasmJsMain/kotlin")
 }
+
+configurations.configureEach {
+    if (!name.startsWith("detekt")) {
+        resolutionStrategy.eachDependency {
+            if (requested.group == "org.jetbrains.kotlinx" && requested.name == "kotlinx-serialization-core-jvm") {
+                useTarget("org.jetbrains.kotlinx:kotlinx-serialization-core-wasm-js:${requested.version}")
+            }
+        }
+    }
+}
+

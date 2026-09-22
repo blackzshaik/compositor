@@ -122,7 +122,7 @@ fun ErrorDiagnosticCard(
                         }
 
                         Text(
-                            text = "✕",
+                            text = "X",
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.clickable(onClick = onDismiss)
@@ -151,7 +151,7 @@ fun ErrorDiagnosticCard(
                     diagnostic.stackTrace?.let { st ->
                         Spacer(modifier = Modifier.height(10.dp))
                         Text(
-                            text = if (showStackTrace) "▼ Hide Stack Trace" else "▶ Show Stack Trace",
+                            text = if (showStackTrace) "[-] Hide Stack Trace" else "[+] Show Stack Trace",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.primary,
@@ -196,7 +196,7 @@ fun ErrorDiagnosticCard(
                             modifier = Modifier.height(34.dp)
                         ) {
                             Text(
-                                text = if (copiedToast) "✓ Copied" else "Copy Details",
+                                text = if (copiedToast) "Copied!" else "Copy Details",
                                 fontSize = 12.sp
                             )
                         }

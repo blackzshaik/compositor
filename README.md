@@ -94,49 +94,49 @@ compositor/
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Quick Start & Wiki
 
-### Prerequisites
+For the complete, step-by-step user guide, configuration reference, and VS Code/MCP setup, see the **[Compositor Wiki](docs/WIKI.md)**.
+
+### 1. Prerequisites
 * **Java 21 JDK** (Android Gradle Plugin 8.x+ requirement)
-* **Android SDK** (with `build-tools` and `platform-tools`)
-* **Node.js 24+** (for web viewer and MCP server)
+* **Android SDK** (API 34 or 35 platform installed)
 
-### Development Setup
+### 2. Verify in 60 Seconds
 ```bash
-# 1. Clone the repository
-git clone https://github.com/<your-username>/compositor.git
-cd compositor
+# Headless batch render to PNG
+./gradlew :samples:sample-app:compositorRender
 
-# 2. Build the core renderer
-./gradlew :core-renderer:build
-
-# 3. Start the Web Viewer
-cd web-viewer
-npm install
-npm run dev
+# Start interactive live daemon + Compose Multiplatform Web Viewer
+./gradlew :samples:sample-app:compositor
 ```
+The live Web Viewer will be available at **`http://localhost:3001`**.
 
 ---
 
-## 🗺️ Roadmap
+## 🗺️ Roadmap & Current Status
 
-- [x] **Phase 1: Foundation & Architecture**
-  - [x] Architecture specification and communication protocols
-  - [x] Strict coding standards and AI agent guidelines (`AGENT.md`)
-  - [x] Modular project scaffolding
-- [ ] **Phase 2: Core Headless Renderer (MVP)**
-  - [ ] CLI command to discover and render `@Preview` via LayoutLib
-  - [ ] Image rasterization pipeline to PNG
-- [ ] **Phase 3: Daemon & Web Viewer**
-  - [ ] Local HTTP & WebSocket server
-  - [ ] React + Tailwind device frame mockup with live hot reload
-  - [ ] Light / Dark theme and font scale controls
-- [ ] **Phase 4: AI Agent Vision Bridge (MCP)**
-  - [ ] MCP tools for screenshot fetching and layout diagnostics
-  - [ ] Seamless integration with Cursor, Claude Code, and Antigravity
+- [x] **Phase 1: Native LayoutLib Engine & Ktor Daemon (100% Kotlin)**
+  - [x] Unbundled LayoutLib host JVM rasterizer
+  - [x] Embedded Kotlin PSI preview AST scanner
+  - [x] Ktor Netty HTTP & WebSocket streaming daemon
+- [x] **Phase 2: Production Web Viewer (Compose Multiplatform Wasm)**
+  - [x] Hardware-accelerated Canvas with Pixel 8 and Galaxy S24 frames
+  - [x] Instant Light/Dark theme toggle & font scale slider (0.85x to 1.5x)
+  - [x] Element inspector bounds overlay & diagnostics
+- [x] **Phase 3: Shippable Android Gradle Plugin (`id("io.compositor")`)**
+  - [x] Standalone plugin with automated AGP classpath & resource resolution
+  - [x] Tasks: `compositor`, `compositorRender`, `compositorMcp`
+- [x] **Phase 4: AI Agent Vision Bridge (Model Context Protocol - MCP)**
+  - [x] Official JetBrains Kotlin MCP SDK embedded in daemon & CLI
+  - [x] 5 vision tools: `list_previews`, `render_preview`, `get_preview_image`, `inspect_layout_tree`, `compare_previews`
+- [x] **Phase 5: IDE Extensions (VS Code & Cursor)**
+  - [x] Sidebar webview panel with context-aware caret-to-preview resolution
+  - [x] Automated workspace detection & daemon process management
 
 ---
 
 ## 📄 License
 
 Compositor is open-source software licensed under the [Apache License, Version 2.0](LICENSE).
+

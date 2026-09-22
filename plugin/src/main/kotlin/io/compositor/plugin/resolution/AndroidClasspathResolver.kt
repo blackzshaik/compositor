@@ -31,6 +31,7 @@ object AndroidClasspathResolver {
         val mergedResourceDirs = resolveMergedResources(project, variantName, capVariant)
         val rJar = resolveRJar(project, variantName, capVariant)
         val dependencyClasspath = resolveDependencies(project, variantName)
+        val compileClasspath = resolveCompileDependencies(project, variantName)
         val watchRoots = resolveWatchRoots(project, extension, variantName)
 
         return CompositorProjectContext(
@@ -38,6 +39,7 @@ object AndroidClasspathResolver {
             variantName = variantName,
             compiledClassesDirs = compiledClassesDirs,
             dependencyClasspathFiles = dependencyClasspath,
+            compileClasspathFiles = compileClasspath,
             mergedResourceDirs = mergedResourceDirs,
             rJar = rJar,
             androidJar = androidJar,
@@ -143,6 +145,31 @@ object AndroidClasspathResolver {
 
             // Include regular JAR dependencies directly present in the configuration
             val jarFiles = runtimeConfig.files.filter { file ->
+                file.extension == "jar" && !dependencies.contains(file)
+            }
+            dependencies.addAll(jarFiles)
+        }
+
+        return dependencies
+    }
+
+    private fun resolveCompileDependencies(project: Project, variantName: String): List<File> {
+        val dependencies = mutableListOf<File>()
+        val configName = "${variantName}CompileClasspath"
+        val compileConfig = project.configurations.findByName(configName)
+
+        if (compileConfig != null && compileConfig.isCanBeResolved) {
+            val artifactView = compileConfig.incoming.artifactView { viewConfig ->
+                viewConfig.attributes { attrs ->
+                    attrs.attribute(
+                        Attribute.of("artifactType", String::class.java),
+                        ARTIFACT_TYPE_ANDROID_CLASSES_JAR
+                    )
+                }
+            }
+            dependencies.addAll(artifactView.artifacts.artifactFiles.files)
+
+            val jarFiles = compileConfig.files.filter { file ->
                 file.extension == "jar" && !dependencies.contains(file)
             }
             dependencies.addAll(jarFiles)

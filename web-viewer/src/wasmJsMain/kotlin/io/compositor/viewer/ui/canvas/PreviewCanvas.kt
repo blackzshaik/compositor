@@ -46,19 +46,24 @@ fun PreviewCanvas(
     panOffsetY: Float,
     isRendering: Boolean,
     onPan: (Float, Float) -> Unit,
+    isInspectorMode: Boolean = false,
     modifier: Modifier = Modifier,
     overlayContent: @Composable () -> Unit = {}
 ) {
+    val dragModifier = if (!isInspectorMode) {
+        Modifier.pointerInput(Unit) {
+            detectDragGestures { change, dragAmount ->
+                change.consume()
+                onPan(dragAmount.x, dragAmount.y)
+            }
+        }
+    } else Modifier
+
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(Color(0xFF0F0F11))
-            .pointerInput(Unit) {
-                detectDragGestures { change, dragAmount ->
-                    change.consume()
-                    onPan(dragAmount.x, dragAmount.y)
-                }
-            },
+            .then(dragModifier),
         contentAlignment = Alignment.Center
     ) {
         Box(

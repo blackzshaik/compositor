@@ -223,7 +223,7 @@ class SourceDirectoryWatcher(
 
     companion object {
         val DEFAULT_DEBOUNCE_DURATION: Duration = 250.milliseconds
-        val DEFAULT_EXTENSIONS: Set<String> = setOf("kt", "xml")
+        val DEFAULT_EXTENSIONS: Set<String> = setOf("kt", "xml", "class")
         val DEFAULT_EXCLUDED_DIRS: Set<String> = setOf(
             "build",
             ".gradle",

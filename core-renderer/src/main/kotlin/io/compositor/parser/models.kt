@@ -1,5 +1,6 @@
 package io.compositor.parser
 
+import io.compositor.renderer.ElementBounds
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -61,7 +62,8 @@ data class PreviewItem(
     val lastRenderedAt: Long? = null,
     val errorDetails: String? = null,
     val imagePath: String? = null,
-    val imageUrl: String? = null
+    val imageUrl: String? = null,
+    val rootBounds: ElementBounds? = null
 )
 
 /**
@@ -73,7 +75,8 @@ data class RenderStateUpdate(
     val durationMs: Long? = null,
     val imagePath: String? = null,
     val imageUrl: String? = null,
-    val errorDetails: String? = null
+    val errorDetails: String? = null,
+    val rootBounds: ElementBounds? = null
 )
 
 /**

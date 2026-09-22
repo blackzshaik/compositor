@@ -33,6 +33,7 @@ val osClassifier = when {
 dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlin.compiler.embeddable)
+    implementation(libs.kotlin.compose.compiler.plugin.embeddable)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.paparazzi)
     implementation(libs.ktor.server.core)
@@ -56,14 +57,16 @@ dependencies {
 }
 
 val copyWebViewer by tasks.registering(Copy::class) {
-    val wasmDist = rootProject.file("web-viewer/build/dist/wasmJs/productionExecutable")
-    val legacyDist = rootProject.file("web-viewer/dist")
-    from(if (wasmDist.exists()) wasmDist else legacyDist)
-    into(layout.buildDirectory.dir("resources/main/web"))
+    dependsOn(":web-viewer:wasmJsBrowserDistribution")
+    from(rootProject.file("web-viewer/build/dist/wasmJs/productionExecutable"))
+    into(layout.buildDirectory.dir("generated/resources/web"))
 }
+
+sourceSets["main"].resources.srcDir(layout.buildDirectory.dir("generated/resources"))
 
 tasks.processResources {
     dependsOn(copyWebViewer)
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 tasks.test {
@@ -93,6 +96,14 @@ tasks.test {
         rootProject.file(
             "samples/sample-app/build/intermediates/compile_and_runtime_not_namespaced_r_class_jar/debug/processDebugResources/R.jar"
         ).absolutePath
+    )
+    systemProperty(
+        "compositor.sample.compile.dir",
+        rootProject.file("samples/sample-app/build/compositor/compile-jars").absolutePath
+    )
+    systemProperty(
+        "compositor.sample.android.jar",
+        file("$androidSdkDir/platforms/android-35/android.jar").absolutePath
     )
     systemProperty(
         "paparazzi.layoutlib.resources.root",

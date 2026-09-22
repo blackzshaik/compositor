@@ -84,7 +84,7 @@ fun InspectorTopBar(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 TopBarPillButton(
-                    text = if (isSidebarExpanded) "«" else "»",
+                    text = if (isSidebarExpanded) "<" else ">",
                     onClick = onToggleSidebar
                 )
 
@@ -130,7 +130,7 @@ fun InspectorTopBar(
             ) {
                 // Theme toggle
                 TopBarPillButton(
-                    text = if (isDarkTheme) "🌙 Dark" else "☀️ Light",
+                    text = if (isDarkTheme) "Dark" else "Light",
                     onClick = onToggleTheme
                 )
 
@@ -142,13 +142,13 @@ fun InspectorTopBar(
 
                 // Orientation toggle
                 TopBarPillButton(
-                    text = if (isLandscape) "🔄 Land" else "📱 Port",
+                    text = if (isLandscape) "Landscape" else "Portrait",
                     onClick = onToggleOrientation
                 )
 
                 // Inspector Mode toggle
                 TopBarPillButton(
-                    text = if (isInspectorMode) "🔍 Active" else "🔍 Inspect",
+                    text = if (isInspectorMode) "Inspect (On)" else "Inspect",
                     isSelected = isInspectorMode,
                     onClick = onToggleInspector
                 )

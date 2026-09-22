@@ -63,6 +63,7 @@ object LayoutLibBootstrap {
             System.setProperty(PROPERTY_RESOURCES_ROOT, resourcesRoot.absolutePath)
         }
 
+        AndroidBuildBootstrap.initializeBuildFields()
         isInitialized = true
     }
 
