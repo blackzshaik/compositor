@@ -148,9 +148,7 @@ class CompositorPipeline(
     @Synchronized
     fun renderPreview(previewId: String): PreviewItem? {
         val item = previewRegistry.getCatalog().previews[previewId] ?: return null
-        scope.launch {
-            daemon.broadcast(DaemonWsMessage.previewRenderStarted(previewId))
-        }
+        println("[Compositor Pipeline] Starting renderPreview for: $previewId")
         previewRegistry.updateRenderStatus(
             previewId = previewId,
             status = PreviewRenderStatus.RENDERING
@@ -160,6 +158,7 @@ class CompositorPipeline(
         val compileResult = compileSourceIfNeeded(sourceFile, def)
         if (compileResult != null && !compileResult.isSuccess) {
             val errorMsg = compileResult.errorMessages.joinToString("\n")
+            System.err.println("[Compositor Pipeline] Compilation error for $previewId: $errorMsg")
             return previewRegistry.updateRenderStatus(
                 previewId = previewId,
                 update = RenderStateUpdate(
@@ -171,33 +170,45 @@ class CompositorPipeline(
 
         val request = buildRenderRequest(previewId, def)
 
-        return when (val result = renderer.render(request)) {
-            is RenderResult.Success -> {
-                previewRegistry.updateRenderStatus(
-                    previewId = previewId,
-                    update = RenderStateUpdate(
-                        status = PreviewRenderStatus.RENDERED,
-                        durationMs = result.durationMs,
-                        imagePath = result.imageFile.absolutePath,
-                        imageUrl = "/api/previews/$previewId/image",
-                        rootBounds = result.rootBounds
+        return try {
+            when (val result = renderer.render(request)) {
+                is RenderResult.Success -> {
+                    previewRegistry.updateRenderStatus(
+                        previewId = previewId,
+                        update = RenderStateUpdate(
+                            status = PreviewRenderStatus.RENDERED,
+                            durationMs = result.durationMs,
+                            imagePath = result.imageFile.absolutePath,
+                            imageUrl = "/api/previews/$previewId/image",
+                            rootBounds = result.rootBounds
+                        )
                     )
-                )
-            }
-            is RenderResult.Failure -> {
-                val details = if (result.stackTrace.isNotBlank()) {
-                    "${result.errorMessage}\n${result.stackTrace}"
-                } else {
-                    result.errorMessage
                 }
-                previewRegistry.updateRenderStatus(
-                    previewId = previewId,
-                    update = RenderStateUpdate(
-                        status = PreviewRenderStatus.ERROR,
-                        errorDetails = details
+                is RenderResult.Failure -> {
+                    val details = if (result.stackTrace.isNotBlank()) {
+                        "${result.errorMessage}\n${result.stackTrace}"
+                    } else {
+                        result.errorMessage
+                    }
+                    System.err.println("[Compositor Pipeline] Render failure for $previewId: ${result.errorMessage}")
+                    previewRegistry.updateRenderStatus(
+                        previewId = previewId,
+                        update = RenderStateUpdate(
+                            status = PreviewRenderStatus.ERROR,
+                            errorDetails = details
+                        )
                     )
-                )
+                }
             }
+        } catch (t: Throwable) {
+            System.err.println("[Compositor Pipeline] Unexpected exception during render for $previewId: ${t.message}")
+            previewRegistry.updateRenderStatus(
+                previewId = previewId,
+                update = RenderStateUpdate(
+                    status = PreviewRenderStatus.ERROR,
+                    errorDetails = t.message ?: "Unexpected rendering error"
+                )
+            )
         }
     }
 
@@ -276,24 +287,24 @@ class CompositorPipeline(
                     renderHandler = { previewId -> renderPreview(previewId) }
                 )
                 disp.onRenderStarted = { previewId ->
-                    scope.launch {
-                        daemon.broadcast(DaemonWsMessage.previewRenderStarted(previewId))
-                    }
+                    println("[Compositor Pipeline] Broadcasting PREVIEW_RENDER_STARTED for: $previewId")
+                    daemon.broadcast(DaemonWsMessage.previewRenderStarted(previewId))
                 }
-                disp.onSourceChanged = { file -> compileSourceIfNeeded(file) }
+                disp.onSourceChanged = { file ->
+                    println("[Compositor Pipeline] Source changed: ${file.name}, checking compilation...")
+                    compileSourceIfNeeded(file)
+                }
                 disp.onPreviewUpdated = { updatedItem ->
                     if (updatedItem.status == PreviewRenderStatus.ERROR) {
                         val errorMsg = updatedItem.errorDetails ?: "Render failed"
-                        scope.launch {
-                            daemon.broadcast(DaemonWsMessage.renderError(updatedItem.id, errorMsg))
-                        }
+                        println("[Compositor Pipeline] Broadcasting RENDER_ERROR for: ${updatedItem.id}")
+                        daemon.broadcast(DaemonWsMessage.renderError(updatedItem.id, errorMsg))
                     } else {
                         val url = updatedItem.imageUrl ?: "/api/previews/${updatedItem.id}/image"
-                        scope.launch {
-                            daemon.broadcast(
-                                DaemonWsMessage.previewUpdated(updatedItem.id, url, preview = updatedItem)
-                            )
-                        }
+                        println("[Compositor Pipeline] Broadcasting PREVIEW_UPDATED for: ${updatedItem.id} (image: $url)")
+                        daemon.broadcast(
+                            DaemonWsMessage.previewUpdated(updatedItem.id, url, preview = updatedItem)
+                        )
                     }
                 }
                 disp.start()

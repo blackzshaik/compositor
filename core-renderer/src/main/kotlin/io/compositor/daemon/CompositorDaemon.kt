@@ -140,6 +140,36 @@ class CompositorDaemon(
                 servePreviewImage(call, previewId)
             }
 
+            get("/api/preview/latest.png") {
+                val catalog = previewRegistry.getCatalog()
+                val latest = catalog.previews.values
+                    .filter { it.imagePath != null && resolveImageFile(it.imagePath, it.id) != null }
+                    .maxByOrNull { it.lastRenderedAt ?: 0L }
+                    ?: catalog.previews.values.firstOrNull { resolveImageFile(it.imagePath, it.id) != null }
+
+                if (latest != null) {
+                    servePreviewImage(call, latest.id)
+                } else {
+                    call.response.header(HttpHeaders.CacheControl, "no-cache")
+                    call.respond(HttpStatusCode.NotFound, mapOf("error" to "No preview image available yet"))
+                }
+            }
+
+            get("/api/previews/latest.png") {
+                val catalog = previewRegistry.getCatalog()
+                val latest = catalog.previews.values
+                    .filter { it.imagePath != null && resolveImageFile(it.imagePath, it.id) != null }
+                    .maxByOrNull { it.lastRenderedAt ?: 0L }
+                    ?: catalog.previews.values.firstOrNull { resolveImageFile(it.imagePath, it.id) != null }
+
+                if (latest != null) {
+                    servePreviewImage(call, latest.id)
+                } else {
+                    call.response.header(HttpHeaders.CacheControl, "no-cache")
+                    call.respond(HttpStatusCode.NotFound, mapOf("error" to "No preview image available yet"))
+                }
+            }
+
             post("/api/previews/{id}/render") {
                 val previewId = resolvePreviewId(
                     rawParam = call.parameters["id"],
@@ -204,14 +234,26 @@ class CompositorDaemon(
     private fun resolveImageFile(imagePath: String?, previewId: String): File? {
         if (!imagePath.isNullOrBlank()) {
             val direct = File(imagePath)
-            if (direct.exists()) return direct
+            if (direct.exists() && direct.isFile) return direct
             val relative = File(projectRoot, imagePath)
-            if (relative.exists()) return relative
+            if (relative.exists() && relative.isFile) return relative
         }
 
-        val sanitized = previewId.replace(':', '_').replace('#', '_')
-        val fallback = File(projectRoot, ".compositor/previews/$sanitized.png")
-        if (fallback.exists()) return fallback
+        val sanitized1 = previewId.replace(':', '_').replace('#', '_').replace('.', '_')
+        val sanitized2 = previewId.replace(':', '_').replace('#', '_')
+
+        val candidatePaths = listOf(
+            File(projectRoot, ".compositor/previews/$sanitized1.png"),
+            File(projectRoot, ".compositor/previews/$sanitized2.png"),
+            File(projectRoot, "build/compositor/previews/$sanitized1.png"),
+            File(projectRoot, "build/compositor/previews/$sanitized2.png")
+        )
+
+        for (candidate in candidatePaths) {
+            if (candidate.exists() && candidate.isFile) {
+                return candidate
+            }
+        }
 
         return null
     }
@@ -225,6 +267,7 @@ class CompositorDaemon(
             return
         }
 
+        println("[Compositor Daemon] HTTP POST render requested for: $previewId")
         broadcast(DaemonWsMessage.previewRenderStarted(previewId))
 
         val updatedItem = if (renderHandler != null) {
@@ -274,6 +317,8 @@ class CompositorDaemon(
         val jsonPayload = json.encodeToString(message)
         val frame = Frame.Text(jsonPayload)
         val staleSessions = mutableListOf<WebSocketSession>()
+
+        println("[Compositor Daemon] Broadcasting ${message.event} to ${activeWsSessions.size} client(s)")
 
         for (session in activeWsSessions) {
             try {

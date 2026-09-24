@@ -3,6 +3,7 @@ package io.compositor.watcher
 import io.compositor.parser.KotlinPsiPreviewScanner
 import io.compositor.parser.PreviewItem
 import io.compositor.parser.PreviewRegistry
+import io.compositor.parser.PreviewRenderStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -51,7 +52,13 @@ class PreviewWatchDispatcher(
             watcher.start()
             dispatchJob = coroutineScope.launch {
                 watcher.debouncedEvents.collect { event ->
-                    handleFileChange(event)
+                    try {
+                        println("[Compositor Watcher] Dispatching event: ${event.kind} for ${event.file.name}")
+                        handleFileChange(event)
+                    } catch (t: Throwable) {
+                        System.err.println("[Compositor Watcher] Error handling file change for ${event.file.name}: ${t.message}")
+                        t.printStackTrace()
+                    }
                 }
             }
         }
@@ -65,6 +72,7 @@ class PreviewWatchDispatcher(
         val extension = event.file.extension.lowercase()
         return when {
             extension == "kt" && event.kind == ChangeKind.DELETED -> {
+                println("[Compositor Watcher] Removing deleted file previews: ${event.file.name}")
                 previewRegistry.removeFile(event.file.invariantSeparatorsPath)
                 emptyList()
             }
@@ -82,10 +90,18 @@ class PreviewWatchDispatcher(
         val allItems = previewRegistry.getCatalog().previews.values.toList()
         for (item in allItems) {
             onRenderStarted?.invoke(item.id)
-            val renderedItem = if (renderHandler != null) {
-                renderHandler.invoke(item.id) ?: item
-            } else {
-                item
+            val renderedItem = try {
+                if (renderHandler != null) {
+                    renderHandler.invoke(item.id) ?: item
+                } else {
+                    item
+                }
+            } catch (t: Throwable) {
+                System.err.println("[Compositor Watcher] Error rendering ${item.id}: ${t.message}")
+                item.copy(
+                    status = PreviewRenderStatus.ERROR,
+                    errorDetails = t.message ?: "Render failure"
+                )
             }
             onPreviewUpdated?.invoke(renderedItem)
         }
@@ -93,17 +109,17 @@ class PreviewWatchDispatcher(
     }
 
     private suspend fun processKotlinFileChange(event: FileChangeEvent): List<PreviewItem> {
-        val content = FileReadHelper.readTextWithRetry(event.file) ?: return emptyList()
-        val normalizedPath = PreviewRegistry.normalizePath(event.file.invariantSeparatorsPath)
-        val existingItems = previewRegistry.getCatalog().previews.values.filter {
-            PreviewRegistry.normalizePath(it.definition.filePath) == normalizedPath
-        }
-        for (item in existingItems) {
-            onRenderStarted?.invoke(item.id)
+        println("[Compositor Watcher] Processing Kotlin source change: ${event.file.name}")
+        val content = FileReadHelper.readTextWithRetry(event.file)
+        if (content == null) {
+            System.err.println("[Compositor Watcher] Warning: Failed to read file ${event.file.name} after retries")
+            return emptyList()
         }
 
         onSourceChanged?.invoke(event.file)
         val definitions = scanner.parseSource(content, event.file.invariantSeparatorsPath)
+        println("[Compositor Scanner] Found ${definitions.size} preview(s) in ${event.file.name}")
+
         val updatedItems = previewRegistry.updateFilePreviews(
             filePath = event.file.invariantSeparatorsPath,
             definitions = definitions,
@@ -111,14 +127,24 @@ class PreviewWatchDispatcher(
         )
 
         for (item in updatedItems) {
-            if (existingItems.none { it.id == item.id }) {
-                onRenderStarted?.invoke(item.id)
+            println("[Compositor Watcher] Rendering preview: ${item.id}")
+            onRenderStarted?.invoke(item.id)
+
+            val renderedItem = try {
+                if (renderHandler != null) {
+                    renderHandler.invoke(item.id) ?: item
+                } else {
+                    item
+                }
+            } catch (t: Throwable) {
+                System.err.println("[Compositor Watcher] Error rendering preview ${item.id}: ${t.message}")
+                item.copy(
+                    status = PreviewRenderStatus.ERROR,
+                    errorDetails = t.message ?: "Render failure"
+                )
             }
-            val renderedItem = if (renderHandler != null) {
-                renderHandler.invoke(item.id) ?: item
-            } else {
-                item
-            }
+
+            println("[Compositor Watcher] Finished preview: ${item.id} (status: ${renderedItem.status})")
             onPreviewUpdated?.invoke(renderedItem)
         }
 

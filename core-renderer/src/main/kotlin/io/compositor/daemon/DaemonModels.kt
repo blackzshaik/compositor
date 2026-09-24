@@ -41,11 +41,16 @@ data class DaemonWsMessage(
                 }
             )
 
-        fun previewRenderStarted(previewId: String): DaemonWsMessage =
+        fun previewRenderStarted(
+            previewId: String,
+            timestamp: Long = System.currentTimeMillis()
+        ): DaemonWsMessage =
             DaemonWsMessage(
                 event = "PREVIEW_RENDER_STARTED",
                 payload = buildJsonObject {
                     put("previewId", previewId)
+                    put("timestamp", timestamp)
+                    put("status", "Rendering")
                 }
             )
 
@@ -68,13 +73,16 @@ data class DaemonWsMessage(
 
         fun renderError(
             previewId: String,
-            error: String
+            error: String,
+            timestamp: Long = System.currentTimeMillis()
         ): DaemonWsMessage =
             DaemonWsMessage(
                 event = "RENDER_ERROR",
                 payload = buildJsonObject {
                     put("previewId", previewId)
                     put("error", error)
+                    put("timestamp", timestamp)
+                    put("status", "Error")
                 }
             )
     }

@@ -29,12 +29,13 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
-    Greeting("Is this thing working")
+    Greeting("Blackz")
 }
 
 
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview2() {
-    Greeting("Shaik")
+    
+    Greeting(" It takes some time to load")
 }

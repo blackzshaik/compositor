@@ -56,10 +56,48 @@ dependencies {
     detektPlugins(libs.detekt.formatting)
 }
 
+val webViewerMode = providers.gradleProperty("compositor.webViewer")
+    .getOrElse(
+        if (providers.gradleProperty("compositor.experimental.cmp").map { it.toBoolean() }.getOrElse(false)) "cmp" else "react"
+    )
+
+val buildWebViewerReact by tasks.registering(Exec::class) {
+    workingDir = rootProject.file("web-viewer-react")
+    val isWindows = System.getProperty("os.name").lowercase().contains("windows")
+    if (isWindows) {
+        commandLine("cmd", "/c", "npm", "run", "build")
+    } else {
+        commandLine("npm", "run", "build")
+    }
+    inputs.dir(rootProject.file("web-viewer-react/src"))
+    inputs.file(rootProject.file("web-viewer-react/package.json"))
+    outputs.dir(rootProject.file("web-viewer-react/dist"))
+}
+
 val copyWebViewer by tasks.registering(Copy::class) {
-    dependsOn(":web-viewer:wasmJsBrowserDistribution")
-    from(rootProject.file("web-viewer/build/dist/wasmJs/productionExecutable"))
-    into(layout.buildDirectory.dir("generated/resources/web"))
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    when (webViewerMode) {
+        "cmp" -> {
+            dependsOn(":web-viewer:wasmJsBrowserDistribution")
+            from(rootProject.file("web-viewer/build/dist/wasmJs/productionExecutable"))
+            into(layout.buildDirectory.dir("generated/resources/web"))
+        }
+        "both" -> {
+            dependsOn(buildWebViewerReact)
+            dependsOn(":web-viewer:wasmJsBrowserDistribution")
+            from(rootProject.file("web-viewer-react/dist"))
+            into(layout.buildDirectory.dir("generated/resources/web"))
+            from(rootProject.file("web-viewer/build/dist/wasmJs/productionExecutable")) {
+                into("cmp")
+            }
+        }
+        else -> {
+            // Default: "react" (ultra-fast, native web experience)
+            dependsOn(buildWebViewerReact)
+            from(rootProject.file("web-viewer-react/dist"))
+            into(layout.buildDirectory.dir("generated/resources/web"))
+        }
+    }
 }
 
 sourceSets["main"].resources.srcDir(layout.buildDirectory.dir("generated/resources"))

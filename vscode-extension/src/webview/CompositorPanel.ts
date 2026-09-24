@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import path from 'node:path';
-import { getWebviewContent, WebviewHtmlOptions } from './htmlHelper.js';
+import { getWebviewContent, getDistPath, WebviewHtmlOptions } from './htmlHelper.js';
 
 export class CompositorPanel {
   public static currentPanel: CompositorPanel | undefined;
@@ -27,7 +27,7 @@ export class CompositorPanel {
       return CompositorPanel.currentPanel;
     }
 
-    const distPath = path.resolve(extensionUri.fsPath, '..', 'web-viewer', 'dist');
+    const distPath = getDistPath(extensionUri);
 
     const panel = vscode.window.createWebviewPanel(
       CompositorPanel.viewType,

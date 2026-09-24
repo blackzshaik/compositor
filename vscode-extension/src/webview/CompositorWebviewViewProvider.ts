@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import path from 'node:path';
-import { getWebviewContent } from './htmlHelper.js';
+import { getWebviewContent, getDistPath } from './htmlHelper.js';
 import { VIEWS } from '../constants.js';
 
 export interface WebviewMessage {
@@ -31,7 +31,7 @@ export class CompositorWebviewViewProvider implements vscode.WebviewViewProvider
   ): void {
     this._view = webviewView;
 
-    const distPath = path.resolve(this._extensionUri.fsPath, '..', 'web-viewer', 'dist');
+    const distPath = getDistPath(this._extensionUri);
 
     webviewView.webview.options = {
       enableScripts: true,

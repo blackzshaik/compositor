@@ -25,7 +25,10 @@ object FileReadHelper {
         while (attempts < maxRetries) {
             try {
                 if (file.exists() && file.isFile && Files.isReadable(file.toPath())) {
-                    return file.readText()
+                    val text = file.readText()
+                    if (text.isNotEmpty() || (file.length() == 0L && attempts >= 2)) {
+                        return text
+                    }
                 }
             } catch (_: IOException) {
                 // Momentary file lock or sharing violation on Windows

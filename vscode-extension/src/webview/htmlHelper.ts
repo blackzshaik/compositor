@@ -14,6 +14,14 @@ export function getNonce(): string {
   return crypto.randomBytes(16).toString('hex');
 }
 
+export function getDistPath(extensionUri: vscode.Uri): string {
+  const reactDist = path.resolve(extensionUri.fsPath, '..', 'web-viewer-react', 'dist');
+  if (fs.existsSync(path.join(reactDist, 'index.html'))) {
+    return reactDist;
+  }
+  return path.resolve(extensionUri.fsPath, '..', 'web-viewer', 'dist');
+}
+
 /**
  * Generates the complete HTML content for the Compositor Webview,
  * rewriting web-viewer assets to local webview URIs and injecting strict CSP.
@@ -25,11 +33,11 @@ export function getWebviewContent(
 ): string {
   const nonce = getNonce();
   const serverPort = options.serverPort ?? 3001;
-  const wsPort = options.wsPort ?? 3002;
+  const wsPort = options.wsPort ?? serverPort;
   const activePreviewId = options.activePreviewId ?? null;
 
-  // Path to web-viewer/dist
-  const distPath = path.resolve(extensionUri.fsPath, '..', 'web-viewer', 'dist');
+  // Path to web-viewer dist (supports web-viewer-react and web-viewer)
+  const distPath = getDistPath(extensionUri);
   const indexHtmlPath = path.join(distPath, 'index.html');
 
   if (fs.existsSync(indexHtmlPath)) {
@@ -62,7 +70,7 @@ export function getWebviewContent(
             serverPort: ${serverPort},
             wsPort: ${wsPort},
             httpBase: "http://localhost:${serverPort}",
-            wsUrl: "ws://localhost:${wsPort}",
+            wsUrl: "ws://localhost:${wsPort}/ws",
             activePreviewId: ${JSON.stringify(activePreviewId)}
           };
           try {

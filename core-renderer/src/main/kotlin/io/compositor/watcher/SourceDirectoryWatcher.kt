@@ -132,6 +132,7 @@ class SourceDirectoryWatcher(
         val file = resolvedPath.toFile()
         if (isMonitoredFile(file)) {
             val changeEvent = FileChangeEvent(file = file, kind = changeKind)
+            println("[Compositor Watcher] FS event: $changeKind -> ${file.name}")
             _rawEvents.emit(changeEvent)
             scheduleDebouncedDispatch(changeEvent)
         }
@@ -143,6 +144,7 @@ class SourceDirectoryWatcher(
 
         pendingDebounceJobs[key] = coroutineScope.launch {
             delay(debounceDuration)
+            println("[Compositor Watcher] Debounce finished (${debounceDuration}) for ${event.file.name}, emitting event...")
             _debouncedEvents.emit(event)
             pendingDebounceJobs.remove(key)
         }

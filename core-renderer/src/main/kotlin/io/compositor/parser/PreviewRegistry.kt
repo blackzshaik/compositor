@@ -70,7 +70,7 @@ class PreviewRegistry(private val storageFile: File? = null) {
                 lastRenderedAt = existing?.lastRenderedAt,
                 errorDetails = existing?.errorDetails,
                 imagePath = existing?.imagePath,
-                imageUrl = existing?.imageUrl,
+                imageUrl = existing?.imageUrl ?: "/api/previews/$id/image",
                 rootBounds = existing?.rootBounds
             )
             items[id] = item
@@ -125,7 +125,7 @@ class PreviewRegistry(private val storageFile: File? = null) {
             durationMs = update.durationMs ?: current.durationMs,
             lastRenderedAt = System.currentTimeMillis(),
             imagePath = update.imagePath ?: current.imagePath,
-            imageUrl = update.imageUrl ?: current.imageUrl,
+            imageUrl = update.imageUrl ?: current.imageUrl ?: "/api/previews/$previewId/image",
             errorDetails = update.errorDetails,
             rootBounds = update.rootBounds ?: current.rootBounds
         )

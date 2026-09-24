@@ -91,9 +91,20 @@ object KotlinSourceCompiler {
         val args = createCompilerArguments(sourceFile, outputDir, cpString, pluginJar)
 
         val compiler = K2JVMCompiler()
+        val startTime = System.currentTimeMillis()
+        println("[Compositor Compiler] Compiling ${sourceFile.name} (hasCompose=$hasCompose, plugin=${pluginJar != null})...")
         return try {
             val exitCode = compiler.exec(collector, Services.EMPTY, args)
+            val durationMs = System.currentTimeMillis() - startTime
             val success = exitCode.code == 0
+            if (success) {
+                println("[Compositor Compiler] Compiled ${sourceFile.name} successfully in ${durationMs}ms -> ${outputDir.path}")
+            } else {
+                System.err.println("[Compositor Compiler] Compilation FAILED for ${sourceFile.name} with exit code ${exitCode.code} in ${durationMs}ms")
+                for (err in errors) {
+                    System.err.println("  $err")
+                }
+            }
             CompilationResult(
                 isSuccess = success,
                 errorMessages = if (!success && errors.isEmpty()) {
@@ -103,6 +114,8 @@ object KotlinSourceCompiler {
                 }
             )
         } catch (e: Exception) {
+            val durationMs = System.currentTimeMillis() - startTime
+            System.err.println("[Compositor Compiler] Exception during compilation of ${sourceFile.name} in ${durationMs}ms: ${e.message}")
             val sw = StringWriter()
             e.printStackTrace(PrintWriter(sw))
             CompilationResult(

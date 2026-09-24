@@ -28,6 +28,7 @@ class LayoutLibPreviewRenderer(
     @Suppress("TooGenericExceptionCaught")
     fun render(request: RenderRequest): RenderResult = synchronized(RENDER_LOCK) {
         val startTime = System.currentTimeMillis()
+        println("[Compositor Renderer] Starting render for ${request.composableId} (${request.className}#${request.methodName})...")
 
         try {
             resetSdkState()
@@ -44,17 +45,22 @@ class LayoutLibPreviewRenderer(
             Thread.currentThread().contextClassLoader = classLoader
 
             try {
-                executeRender(request, classLoader, startTime)
+                val result = executeRender(request, classLoader, startTime)
+                val durationMs = System.currentTimeMillis() - startTime
+                println("[Compositor Renderer] Render SUCCEEDED for ${request.composableId} in ${durationMs}ms")
+                result
             } finally {
                 Thread.currentThread().contextClassLoader = originalClassLoader
             }
-        } catch (e: Exception) {
+        } catch (t: Throwable) {
             resetSdkState()
+            val durationMs = System.currentTimeMillis() - startTime
+            System.err.println("[Compositor Renderer] Render FAILED for ${request.composableId} in ${durationMs}ms: ${t.message}")
             val sw = StringWriter()
-            e.printStackTrace(PrintWriter(sw))
+            t.printStackTrace(PrintWriter(sw))
             RenderResult.Failure(
-                errorMessage = e.message ?: "Unknown rendering failure",
-                cause = e,
+                errorMessage = t.message ?: "Unknown rendering failure",
+                cause = t,
                 stackTrace = sw.toString()
             )
         }
