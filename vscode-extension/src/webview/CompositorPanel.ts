@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import path from 'node:path';
 import { getWebviewContent, getDistPath, WebviewHtmlOptions } from './htmlHelper.js';
 
 export class CompositorPanel {

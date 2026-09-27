@@ -75,9 +75,11 @@ Master Orchestrator: [`brain/phase-5-ide-extensions/INDEX.md`](./phase-5-ide-ext
 ---
 
 ## 🏆 Project Milestone
-All 5 phases of Compositor are complete:
+All core phases of Compositor are complete and prepared for public launch:
 - **Phase 1**: Native LayoutLib Rendering Engine & Ktor Daemon (100% Kotlin)
-- **Phase 2**: Production Web Viewer (Compose Multiplatform Kotlin/Wasm)
+- **Phase 2**: Production Web Viewer (Compose Multiplatform Kotlin/Wasm & React)
 - **Phase 3**: Shippable Android Gradle Plugin (`id("io.compositor")`)
 - **Phase 4**: Embedded Kotlin Model Context Protocol (MCP) AI Agent Vision Bridge
 - **Phase 5**: IDE Extensions & Plugin Ecosystem (VS Code & Cursor)
+- **Phase 6**: Alpha Release (`0.1.0-alpha01`) & Open Source Infrastructure (CI/CD, Governance, Community templates)
+

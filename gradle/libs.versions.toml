@@ -54,4 +54,4 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 paparazzi = { id = "app.cash.paparazzi", version.ref = "paparazzi" }
-compositor = { id = "io.compositor", version = "0.1.0-SNAPSHOT" }
+compositor = { id = "io.compositor", version = "0.1.0-alpha01" }

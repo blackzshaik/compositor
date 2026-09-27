@@ -1,0 +1,78 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build & Publish Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies & Build Web Viewer
+        run: |
+          cd web-viewer-react
+          npm ci
+          npm run build
+
+      - name: Package VS Code Extension (.vsix)
+        run: |
+          cd vscode-extension
+          npm ci
+          npm run build
+          npx @vscode/vsce package --no-dependencies --out compositor-preview-${{ github.ref_name }}.vsix
+
+      - name: Build Gradle Artifacts
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.java.home=${{ env.JAVA_HOME }}"
+        run: |
+          ./gradlew :core-renderer:assemble :plugin:assemble --no-daemon
+
+      - name: Publish VS Code Extension to Marketplace (if token configured)
+        if: env.VSCE_PAT != ''
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          cd vscode-extension
+          npx @vscode/vsce publish --packagePath compositor-preview-${{ github.ref_name }}.vsix
+
+      - name: Publish VS Code Extension to Open VSX (if token configured)
+        if: env.OVSX_PAT != ''
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
+          cd vscode-extension
+          npx ovsx publish compositor-preview-${{ github.ref_name }}.vsix -p ${{ secrets.OVSX_PAT }}
+
+      - name: Create GitHub Release & Upload VSIX Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Compositor ${{ github.ref_name }}
+          draft: false
+          prerelease: true
+          generate_release_notes: true
+          files: |
+            vscode-extension/*.vsix

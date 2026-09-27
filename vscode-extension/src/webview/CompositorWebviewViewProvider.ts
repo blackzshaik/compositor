@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import path from 'node:path';
 import { getWebviewContent, getDistPath } from './htmlHelper.js';
 import { VIEWS } from '../constants.js';
 

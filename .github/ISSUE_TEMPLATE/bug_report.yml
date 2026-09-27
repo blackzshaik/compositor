@@ -1,0 +1,48 @@
+name: 🐛 Bug Report
+description: Report a reproducible problem or unexpected behavior in Compositor
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report an issue! Please search existing issues first before submitting.
+  - type: input
+    id: version
+    attributes:
+      label: Compositor Version
+      description: What version of Compositor are you using (e.g. 0.1.0-alpha01)?
+      placeholder: "0.1.0-alpha01"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating System, Java version, and Android Gradle Plugin / Compose versions
+      placeholder: "macOS Sonoma / Windows 11, JDK 21, AGP 8.8.0, Compose 1.7.0"
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the Bug
+      description: A clear and concise description of what happened.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Steps or minimal composable snippet to reproduce the behavior.
+      placeholder: |
+        1. Add @Preview to Composable '...'
+        2. Run './gradlew :app:compositor'
+        3. See error in browser or terminal
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Log Output or Stack Trace
+      description: Please copy and paste any relevant logs from the terminal or daemon.
+      render: shell

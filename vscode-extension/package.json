@@ -4,6 +4,15 @@
   "description": "Headless Jetpack Compose live preview & inspector inside VS Code & Cursor",
   "version": "0.1.0",
   "publisher": "compositor",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/compositor-org/compositor.git"
+  },
+  "bugs": {
+    "url": "https://github.com/compositor-org/compositor/issues"
+  },
+  "homepage": "https://github.com/compositor-org/compositor#readme",
   "icon": "resources/compositor-icon.svg",
   "engines": {
     "vscode": "^1.90.0"
@@ -34,6 +43,7 @@
     "vscode:prepublish": "npm run build",
     "build": "node esbuild.config.mjs",
     "watch": "node esbuild.config.mjs --watch",
+    "package": "vsce package --no-dependencies",
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "lint:fix": "eslint \"src/**/*.{ts,tsx}\" --fix",

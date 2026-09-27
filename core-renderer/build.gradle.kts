@@ -13,12 +13,35 @@ java {
 }
 
 group = "io.compositor"
-version = "0.1.0-SNAPSHOT"
+version = "0.1.0-alpha01"
 
 publishing {
     publications {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
+            pom {
+                name.set("Compositor Core Renderer")
+                description.set("Headless Jetpack Compose preview engine and Ktor daemon")
+                url.set("https://github.com/compositor-org/compositor")
+                licenses {
+                    license {
+                        name.set("The Apache License, Version 2.0")
+                        url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                    }
+                }
+                developers {
+                    developer {
+                        id.set("maintainers")
+                        name.set("Compositor Maintainers")
+                        email.set("maintainers@compositor.io")
+                    }
+                }
+                scm {
+                    connection.set("scm:git:git://github.com/compositor-org/compositor.git")
+                    developerConnection.set("scm:git:ssh://github.com:compositor-org/compositor.git")
+                    url.set("https://github.com/compositor-org/compositor")
+                }
+            }
         }
     }
 }
