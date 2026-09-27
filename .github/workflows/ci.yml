@@ -29,6 +29,9 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Make Gradlew Executable
+        run: chmod +x gradlew
+
       - name: Cache Gradle Dependencies
         uses: actions/cache@v4
         with:
@@ -57,13 +60,13 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+
+      - name: Make Gradlew Executable
+        run: chmod +x gradlew
 
       - name: Build Web Viewer Bundle
         run: |

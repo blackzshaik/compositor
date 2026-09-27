@@ -214,7 +214,7 @@ export const PreviewCatalogProvider: React.FC<{ children: React.ReactNode }> = (
           }
           if (mountedRef.current) {
             setConnected(true);
-            console.log('[Compositor WS] Connected to live preview server at:', WS_URL);
+            console.info('[Compositor WS] Connected to live preview server at:', WS_URL);
           }
         };
 
@@ -226,21 +226,21 @@ export const PreviewCatalogProvider: React.FC<{ children: React.ReactNode }> = (
             const text = event.data.trim();
             if (!text || text === 'ping' || text === 'pong') return;
 
-            let message: any;
+            let message: Record<string, unknown>;
             try {
-              message = JSON.parse(text);
-            } catch (parseErr) {
+              message = JSON.parse(text) as Record<string, unknown>;
+            } catch {
               console.warn('[Compositor WS] Non-JSON or truncated WebSocket frame ignored:', text);
               return;
             }
 
             if (!message || typeof message !== 'object') return;
-            const { event: eventName, payload } = message;
+            const { event: eventName, payload } = message as { event: string; payload: Record<string, unknown> };
             if (!eventName || !payload) return;
 
             if (eventName === 'PREVIEW_REGISTERED' && payload.preview) {
-              const item: PreviewItem = payload.preview;
-              console.log('[Compositor WS] PREVIEW_REGISTERED:', item.id);
+              const item = payload.preview as PreviewItem;
+              console.info('[Compositor WS] PREVIEW_REGISTERED:', item.id);
               setCatalog((prev) => {
                 if (!prev) return prev;
                 const existing = prev.previews[item.id];
@@ -251,9 +251,9 @@ export const PreviewCatalogProvider: React.FC<{ children: React.ReactNode }> = (
                 };
               });
             } else if (eventName === 'PREVIEW_RENDER_STARTED' && payload.previewId) {
-              const previewId = payload.previewId;
-              const startedAt = payload.timestamp ?? Date.now();
-              console.log(`[Compositor WS] PREVIEW_RENDER_STARTED for ${previewId} (timestamp: ${startedAt})`);
+              const previewId = payload.previewId as string;
+              const startedAt = (payload.timestamp as number) ?? Date.now();
+              console.info(`[Compositor WS] PREVIEW_RENDER_STARTED for ${previewId} (timestamp: ${startedAt})`);
 
               setCatalog((prev) => {
                 if (!prev || !prev.previews[previewId]) return prev;
@@ -276,14 +276,14 @@ export const PreviewCatalogProvider: React.FC<{ children: React.ReactNode }> = (
                 };
               });
             } else if (eventName === 'PREVIEW_UPDATED' && payload.previewId) {
-              const previewId = payload.previewId;
-              const timestamp = payload.timestamp ?? Date.now();
-              const rawUrl = payload.url || `/api/previews/${encodeURIComponent(previewId)}/image`;
+              const previewId = payload.previewId as string;
+              const timestamp = (payload.timestamp as number) ?? Date.now();
+              const rawUrl = (payload.url as string) || `/api/previews/${encodeURIComponent(previewId)}/image`;
               const freshUrl = rawUrl.includes('?')
                 ? (rawUrl.includes('t=') ? rawUrl : `${rawUrl}&t=${timestamp}`)
                 : `${rawUrl}?t=${timestamp}`;
 
-              console.log(`[Compositor WS] PREVIEW_UPDATED for ${previewId} -> ${freshUrl}`);
+              console.info(`[Compositor WS] PREVIEW_UPDATED for ${previewId} -> ${freshUrl}`);
 
               setCatalog((prev) => {
                 if (!prev) return prev;

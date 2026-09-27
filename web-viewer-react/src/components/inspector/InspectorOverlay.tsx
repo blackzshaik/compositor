@@ -71,14 +71,23 @@ const DEFAULT_HIERARCHY: LayoutHierarchy = {
   },
 };
 
-function elementBoundsToNode(b: { className: string; left: number; top: number; width: number; height: number; children?: any[] }, id = 'node-0'): LayoutNode {
+interface RawElementBounds {
+  className: string;
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  children?: RawElementBounds[];
+}
+
+function elementBoundsToNode(b: RawElementBounds, id = 'node-0'): LayoutNode {
   return {
     id,
     name: b.className.split('.').pop() || b.className,
     qualifiedName: b.className,
     bounds: { left: b.left, top: b.top, right: b.left + b.width, bottom: b.top + b.height },
     dpBounds: { left: b.left, top: b.top, right: b.left + b.width, bottom: b.top + b.height },
-    children: b.children?.map((c: any, i: number) => elementBoundsToNode(c, `${id}-${i}`)) || [],
+    children: b.children?.map((c: RawElementBounds, i: number) => elementBoundsToNode(c, `${id}-${i}`)) || [],
   };
 }
 
