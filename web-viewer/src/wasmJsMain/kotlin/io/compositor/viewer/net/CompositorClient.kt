@@ -55,8 +55,10 @@ class CompositorClient(
     /**
      * Requests the daemon to render or re-render a specific composable preview.
      */
-    suspend fun triggerRender(previewId: String): RenderResponse =
-        httpClient.post("$baseUrl/api/previews/$previewId/render").body()
+    suspend fun triggerRender(previewId: String): RenderResponse {
+        val safeId = previewId.replace("#", "%23")
+        return httpClient.post("$baseUrl/api/previews/$safeId/render").body()
+    }
 
     /**
      * Constructs the cache-busted URL for a preview image.
@@ -64,7 +66,8 @@ class CompositorClient(
     fun getPreviewImageUrl(previewId: String, epoch: Long = 0L): String {
         cacheBuster++
         val timestamp = if (epoch > 0L) epoch else jsDateNow().toLong()
-        return "$baseUrl/api/previews/$previewId/image?t=${timestamp}_$cacheBuster"
+        val safeId = previewId.replace("#", "%23")
+        return "$baseUrl/api/previews/$safeId/image?t=${timestamp}_$cacheBuster"
     }
 
     /**

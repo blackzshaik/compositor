@@ -39,6 +39,11 @@ class PreviewRegistry(private val storageFile: File? = null) {
     }
 
     /**
+     * Constructs a safe, URL-encoded image route for a preview identifier.
+     */
+    fun formatImageUrl(previewId: String): String = formatPreviewImageUrl(previewId)
+
+    /**
      * Updates or registers preview definitions for a given source file.
      * Preserves existing render results when applicable.
      */
@@ -70,7 +75,7 @@ class PreviewRegistry(private val storageFile: File? = null) {
                 lastRenderedAt = existing?.lastRenderedAt,
                 errorDetails = existing?.errorDetails,
                 imagePath = existing?.imagePath,
-                imageUrl = existing?.imageUrl ?: "/api/previews/$id/image",
+                imageUrl = existing?.imageUrl?.takeIf { !it.contains('#') } ?: formatPreviewImageUrl(id),
                 rootBounds = existing?.rootBounds
             )
             items[id] = item
@@ -120,12 +125,18 @@ class PreviewRegistry(private val storageFile: File? = null) {
         update: RenderStateUpdate
     ): PreviewItem? {
         val current = items[previewId] ?: return null
+        val currentUrl = current.imageUrl
+        val safeFallback = if (currentUrl != null && !currentUrl.contains('#')) {
+            currentUrl
+        } else {
+            formatPreviewImageUrl(previewId)
+        }
         val updated = current.copy(
             status = update.status,
             durationMs = update.durationMs ?: current.durationMs,
             lastRenderedAt = System.currentTimeMillis(),
             imagePath = update.imagePath ?: current.imagePath,
-            imageUrl = update.imageUrl ?: current.imageUrl ?: "/api/previews/$previewId/image",
+            imageUrl = update.imageUrl?.takeIf { !it.contains('#') } ?: safeFallback,
             errorDetails = update.errorDetails,
             rootBounds = update.rootBounds ?: current.rootBounds
         )
@@ -220,11 +231,31 @@ class PreviewRegistry(private val storageFile: File? = null) {
 
         val loaded = json.decodeFromString<PreviewCatalog>(content)
         items.clear()
-        items.putAll(loaded.previews)
+        for ((key, item) in loaded.previews) {
+            val sanitized = if (item.imageUrl != null && item.imageUrl.contains('#')) {
+                item.copy(imageUrl = formatPreviewImageUrl(item.id))
+            } else {
+                item
+            }
+            items[key] = sanitized
+        }
     }
 
     companion object {
         fun normalizePath(rawPath: String): String =
             rawPath.replace('\\', '/').trim()
     }
+}
+
+/**
+ * Constructs a safe, URL-encoded image route for a preview identifier.
+ */
+fun formatPreviewImageUrl(previewId: String): String {
+    val encoded = try {
+        java.net.URLEncoder.encode(previewId, java.nio.charset.StandardCharsets.UTF_8.name())
+            .replace("+", "%20")
+    } catch (_: IllegalArgumentException) {
+        previewId.replace("#", "%23")
+    }
+    return "/api/previews/$encoded/image"
 }

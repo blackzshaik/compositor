@@ -5,6 +5,7 @@ import io.compositor.parser.PreviewCatalog
 import io.compositor.parser.PreviewItem
 import io.compositor.parser.PreviewRegistry
 import io.compositor.parser.PreviewRenderStatus
+import io.compositor.parser.formatPreviewImageUrl
 import io.compositor.watcher.PreviewWatchDispatcher
 import io.compositor.watcher.SourceDirectoryWatcher
 import io.ktor.http.HttpHeaders
@@ -14,6 +15,7 @@ import io.ktor.server.sse.SSE
 import io.modelcontextprotocol.kotlin.sdk.server.mcp
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.install
 import io.ktor.server.cio.CIO
 import io.ktor.server.cio.CIOApplicationEngine
@@ -25,6 +27,7 @@ import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondFile
+import io.ktor.server.routing.Routing
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
@@ -42,6 +45,8 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
 import java.io.IOException
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.seconds
 
@@ -110,105 +115,117 @@ class CompositorDaemon(
 
     private fun installRoutes(app: Application) {
         app.routing {
-            get("/api/status") {
-                val status = DaemonStatus(
-                    status = "running",
-                    projectRoot = projectRoot.canonicalPath.replace('\\', '/'),
-                    port = port,
-                    watcherActive = watcherActive,
-                    previewsCount = previewRegistry.getCatalog().totalCount,
-                    uptimeMs = System.currentTimeMillis() - startTimeMs
-                )
-                call.respond(status)
-            }
-
-            get("/api/previews") {
-                val catalog: PreviewCatalog = previewRegistry.getCatalog()
-                call.respond(catalog)
-            }
-
-            get("/api/previews/{id}/image") {
-                val previewId = resolvePreviewId(
-                    rawParam = call.parameters["id"],
-                    queryParam = call.request.queryParameters["id"]
-                )
-                servePreviewImage(call, previewId)
-            }
-
-            get("/api/previews/image") {
-                val previewId = call.request.queryParameters["id"]
-                servePreviewImage(call, previewId)
-            }
-
-            get("/api/preview/latest.png") {
-                val catalog = previewRegistry.getCatalog()
-                val latest = catalog.previews.values
-                    .filter { it.imagePath != null && resolveImageFile(it.imagePath, it.id) != null }
-                    .maxByOrNull { it.lastRenderedAt ?: 0L }
-                    ?: catalog.previews.values.firstOrNull { resolveImageFile(it.imagePath, it.id) != null }
-
-                if (latest != null) {
-                    servePreviewImage(call, latest.id)
-                } else {
-                    call.response.header(HttpHeaders.CacheControl, "no-cache")
-                    call.respond(HttpStatusCode.NotFound, mapOf("error" to "No preview image available yet"))
-                }
-            }
-
-            get("/api/previews/latest.png") {
-                val catalog = previewRegistry.getCatalog()
-                val latest = catalog.previews.values
-                    .filter { it.imagePath != null && resolveImageFile(it.imagePath, it.id) != null }
-                    .maxByOrNull { it.lastRenderedAt ?: 0L }
-                    ?: catalog.previews.values.firstOrNull { resolveImageFile(it.imagePath, it.id) != null }
-
-                if (latest != null) {
-                    servePreviewImage(call, latest.id)
-                } else {
-                    call.response.header(HttpHeaders.CacheControl, "no-cache")
-                    call.respond(HttpStatusCode.NotFound, mapOf("error" to "No preview image available yet"))
-                }
-            }
-
-            post("/api/previews/{id}/render") {
-                val previewId = resolvePreviewId(
-                    rawParam = call.parameters["id"],
-                    queryParam = call.request.queryParameters["id"]
-                )
-                handleRenderRequest(call, previewId)
-            }
-
-            post("/api/previews/render") {
-                val previewId = call.request.queryParameters["id"]
-                handleRenderRequest(call, previewId)
-            }
-
-            webSocket("/ws") {
-                activeWsSessions.add(this)
-                try {
-                    for (frame in incoming) {
-                        if (frame is Frame.Text) {
-                            handleClientWsMessage(frame.readText())
-                        }
-                    }
-                } catch (_: ClosedReceiveChannelException) {
-                    // Normal WebSocket channel closure
-                } finally {
-                    activeWsSessions.remove(this)
-                }
-            }
-
-            // Model Context Protocol (MCP) Server-Sent Events endpoints
-            mcp("/mcp") { mcpServer.server }
-            mcp("/sse") { mcpServer.server }
-
-            // Embedded Web Viewer static bundle
-            staticResources("/", "web", index = "index.html")
+            installStatusAndCatalogRoutes(this)
+            installPreviewRoutes(this)
+            installWsAndStaticRoutes(this)
         }
     }
 
-    private suspend fun servePreviewImage(
-        call: io.ktor.server.application.ApplicationCall,
+    private fun installStatusAndCatalogRoutes(routing: Routing) {
+        routing.get("/api/status") {
+            val status = DaemonStatus(
+                status = "running",
+                projectRoot = projectRoot.canonicalPath.replace('\\', '/'),
+                port = port,
+                watcherActive = watcherActive,
+                previewsCount = previewRegistry.getCatalog().totalCount,
+                uptimeMs = System.currentTimeMillis() - startTimeMs
+            )
+            call.respond(status)
+        }
+
+        routing.get("/api/previews") {
+            val catalog: PreviewCatalog = previewRegistry.getCatalog()
+            call.respond(catalog)
+        }
+    }
+
+    private fun installPreviewRoutes(routing: Routing) {
+        routing.get("/api/previews/{id}") {
+            val previewId = resolvePreviewId(
+                rawParam = call.parameters["id"],
+                queryParam = call.request.queryParameters["id"]
+            )
+            handlePreviewGet(call, previewId)
+        }
+
+        routing.get("/api/previews/{id}/image") {
+            val previewId = resolvePreviewId(
+                rawParam = call.parameters["id"],
+                queryParam = call.request.queryParameters["id"]
+            )
+            servePreviewImage(call, previewId)
+        }
+
+        routing.get("/api/previews/image") {
+            val previewId = call.request.queryParameters["id"]
+            servePreviewImage(call, previewId)
+        }
+
+        routing.get("/api/previews/{id}/hierarchy") {
+            val previewId = resolvePreviewId(
+                rawParam = call.parameters["id"],
+                queryParam = call.request.queryParameters["id"]
+            )
+            handleHierarchyGet(call, previewId)
+        }
+
+        routing.get("/api/previews/{id}/hierarchy.json") {
+            val previewId = resolvePreviewId(
+                rawParam = call.parameters["id"],
+                queryParam = call.request.queryParameters["id"]
+            )
+            handleHierarchyGet(call, previewId)
+        }
+
+        routing.get("/api/preview/latest.png") {
+            serveLatestPreviewImage(call)
+        }
+
+        routing.get("/api/previews/latest.png") {
+            serveLatestPreviewImage(call)
+        }
+
+        routing.post("/api/previews/{id}/render") {
+            val previewId = resolvePreviewId(
+                rawParam = call.parameters["id"],
+                queryParam = call.request.queryParameters["id"]
+            )
+            handleRenderRequest(call, previewId)
+        }
+
+        routing.post("/api/previews/render") {
+            val previewId = call.request.queryParameters["id"]
+            handleRenderRequest(call, previewId)
+        }
+    }
+
+    private fun installWsAndStaticRoutes(routing: Routing) {
+        routing.webSocket("/ws") {
+            activeWsSessions.add(this)
+            try {
+                for (frame in incoming) {
+                    if (frame is Frame.Text) {
+                        handleClientWsMessage(frame.readText())
+                    }
+                }
+            } catch (_: ClosedReceiveChannelException) {
+                // Normal WebSocket channel closure
+            } finally {
+                activeWsSessions.remove(this)
+            }
+        }
+
+        // Model Context Protocol (MCP) Server-Sent Events endpoints
+        routing.mcp("/mcp") { mcpServer.server }
+        routing.mcp("/sse") { mcpServer.server }
+
+        // Embedded Web Viewer static bundle
+        routing.staticResources("/", "web", index = "index.html")
+    }
+
+    private suspend fun handlePreviewGet(
+        call: ApplicationCall,
         previewId: String?
     ) {
         if (previewId.isNullOrBlank()) {
@@ -216,7 +233,49 @@ class CompositorDaemon(
             return
         }
 
-        val item = previewRegistry.getCatalog().previews[previewId]
+        val acceptHeader = call.request.headers[HttpHeaders.Accept] ?: ""
+        val prefersJson = acceptHeader.contains("application/json") &&
+            !acceptHeader.contains("text/html") &&
+            !acceptHeader.contains("image/")
+
+        val item = findPreviewItem(previewId)
+        if (prefersJson) {
+            if (item != null) {
+                call.respond(item)
+            } else {
+                call.respond(
+                    HttpStatusCode.NotFound,
+                    mapOf("error" to "Preview not found for id: $previewId")
+                )
+            }
+            return
+        }
+
+        val candidateFile = resolveImageFile(item?.imagePath, previewId)
+        if (candidateFile != null && candidateFile.exists() && candidateFile.isFile) {
+            call.response.header(HttpHeaders.CacheControl, "no-cache, no-store, must-revalidate")
+            call.response.header(HttpHeaders.ContentType, "image/png")
+            call.respondFile(candidateFile)
+        } else if (item != null) {
+            call.respond(item)
+        } else {
+            call.respond(
+                HttpStatusCode.NotFound,
+                mapOf("error" to "Preview image not found for id: $previewId")
+            )
+        }
+    }
+
+    private suspend fun servePreviewImage(
+        call: ApplicationCall,
+        previewId: String?
+    ) {
+        if (previewId.isNullOrBlank()) {
+            call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing preview id"))
+            return
+        }
+
+        val item = findPreviewItem(previewId)
         val candidateFile = resolveImageFile(item?.imagePath, previewId)
 
         if (candidateFile != null && candidateFile.exists() && candidateFile.isFile) {
@@ -231,30 +290,176 @@ class CompositorDaemon(
         }
     }
 
-    private fun resolveImageFile(imagePath: String?, previewId: String): File? {
+    private suspend fun handleHierarchyGet(
+        call: ApplicationCall,
+        previewId: String?
+    ) {
+        if (previewId.isNullOrBlank()) {
+            call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing preview id"))
+            return
+        }
+
+        val item = findPreviewItem(previewId)
+        if (item?.rootBounds != null) {
+            call.respond(mapOf("root" to item.rootBounds))
+        } else if (item != null) {
+            val fallbackRoot = mapOf(
+                "className" to item.definition.functionName,
+                "left" to 0,
+                "top" to 0,
+                "width" to 1080,
+                "height" to 2340,
+                "children" to emptyList<Any>()
+            )
+            call.respond(mapOf("root" to fallbackRoot))
+        } else {
+            call.respond(
+                HttpStatusCode.NotFound,
+                mapOf("error" to "Layout hierarchy not found for id: $previewId")
+            )
+        }
+    }
+
+    private suspend fun serveLatestPreviewImage(call: ApplicationCall) {
+        val catalog = previewRegistry.getCatalog()
+        val latest = catalog.previews.values
+            .filter { it.imagePath != null && resolveImageFile(it.imagePath, it.id) != null }
+            .maxByOrNull { it.lastRenderedAt ?: 0L }
+            ?: catalog.previews.values.firstOrNull { resolveImageFile(it.imagePath, it.id) != null }
+
+        if (latest != null) {
+            servePreviewImage(call, latest.id)
+        } else {
+            call.response.header(HttpHeaders.CacheControl, "no-cache")
+            call.respond(HttpStatusCode.NotFound, mapOf("error" to "No preview image available yet"))
+        }
+    }
+
+    @Suppress("ReturnCount")
+    fun findPreviewItem(previewId: String): PreviewItem? {
+        val catalog = previewRegistry.getCatalog()
+        val decoded = decodeSafely(previewId)
+
+        catalog.previews[previewId]?.let { return it }
+        catalog.previews[decoded]?.let { return it }
+
+        val previewIdNoHash = previewId.substringBefore('#')
+        val decodedNoHash = decoded.substringBefore('#')
+        val noHashMatch = catalog.previews.values.firstOrNull {
+            it.id.substringBefore('#') == previewIdNoHash || it.id.substringBefore('#') == decodedNoHash
+        }
+        if (noHashMatch != null) return noHashMatch
+
+        val idNoKt = decodedNoHash.replace("Kt.", ".")
+        val noKtMatch = catalog.previews.values.firstOrNull {
+            it.id.replace("Kt.", ".").substringBefore('#') == idNoKt
+        }
+        if (noKtMatch != null) return noKtMatch
+
+        val shortName = decodedNoHash.substringAfterLast('.').substringBefore('#')
+        if (shortName.isNotBlank() && shortName.length >= 4) {
+            val shortMatch = catalog.previews.values.firstOrNull {
+                it.definition.functionName == shortName || it.id.contains(shortName)
+            }
+            if (shortMatch != null) return shortMatch
+        }
+
+        return null
+    }
+
+    private fun decodeSafely(raw: String): String =
+        try {
+            URLDecoder.decode(raw, StandardCharsets.UTF_8.name())
+        } catch (_: IllegalArgumentException) {
+            raw
+        }
+
+    @Suppress("ReturnCount", "CyclomaticComplexMethod")
+    fun resolveImageFile(imagePath: String?, previewId: String): File? {
+        val decodedId = decodeSafely(previewId)
+        val module = decodedId.substringBefore(':', "").trim()
+
         if (!imagePath.isNullOrBlank()) {
             val direct = File(imagePath)
             if (direct.exists() && direct.isFile) return direct
             val relative = File(projectRoot, imagePath)
             if (relative.exists() && relative.isFile) return relative
-        }
-
-        val sanitized1 = previewId.replace(':', '_').replace('#', '_').replace('.', '_')
-        val sanitized2 = previewId.replace(':', '_').replace('#', '_')
-
-        val candidatePaths = listOf(
-            File(projectRoot, ".compositor/previews/$sanitized1.png"),
-            File(projectRoot, ".compositor/previews/$sanitized2.png"),
-            File(projectRoot, "build/compositor/previews/$sanitized1.png"),
-            File(projectRoot, "build/compositor/previews/$sanitized2.png")
-        )
-
-        for (candidate in candidatePaths) {
-            if (candidate.exists() && candidate.isFile) {
-                return candidate
+            if (module.isNotEmpty()) {
+                val modRel = File(File(projectRoot, module), imagePath)
+                if (modRel.exists() && modRel.isFile) return modRel
             }
         }
 
+        val candidateDirs = LinkedHashSet<File>()
+        candidateDirs.add(File(projectRoot, ".compositor/previews"))
+        candidateDirs.add(File(projectRoot, "build/compositor/previews"))
+        candidateDirs.add(File(projectRoot, ".compositor"))
+        if (module.isNotEmpty()) {
+            candidateDirs.add(File(projectRoot, "$module/.compositor/previews"))
+            candidateDirs.add(File(projectRoot, "$module/build/compositor/previews"))
+            candidateDirs.add(File(projectRoot, "$module/.compositor"))
+        }
+
+        projectRoot.listFiles { f -> f.isDirectory }?.forEach { subDir ->
+            val subPreviews = File(subDir, ".compositor/previews")
+            if (subPreviews.exists() && subPreviews.isDirectory) {
+                candidateDirs.add(subPreviews)
+            }
+        }
+
+        val matchedItem = findPreviewItem(previewId)
+        val idVariants = LinkedHashSet<String>()
+        matchedItem?.let { idVariants.add(it.id) }
+        idVariants.add(previewId)
+        idVariants.add(decodedId)
+        idVariants.add(previewId.substringBefore('#'))
+        idVariants.add(decodedId.substringBefore('#'))
+
+        val candidateNames = LinkedHashSet<String>()
+        for (variant in idVariants) {
+            candidateNames.add(variant.replace(':', '_').replace('#', '_').replace('.', '_'))
+            candidateNames.add(variant.replace(':', '_').replace('#', '_'))
+            candidateNames.add(variant.replace("Kt.", ".").replace(':', '_').replace('#', '_').replace('.', '_'))
+            candidateNames.add(variant.substringAfterLast(':').replace('#', '_').replace('.', '_'))
+        }
+
+        for (dir in candidateDirs) {
+            if (!dir.exists() || !dir.isDirectory) continue
+            for (name in candidateNames) {
+                val file = File(dir, "$name.png")
+                if (file.exists() && file.isFile) return file
+                val fileNoExt = File(dir, name)
+                if (fileNoExt.exists() && fileNoExt.isFile) return fileNoExt
+            }
+        }
+
+        return findFuzzyImageFile(candidateDirs, decodedId)
+    }
+
+    private fun findFuzzyImageFile(candidateDirs: Set<File>, decodedId: String): File? {
+        val funcName = decodedId.substringAfterLast('.').substringBefore('#')
+        val baseSanitized = decodedId.substringBefore('#').replace(':', '_').replace('.', '_')
+        val baseNoKt = baseSanitized.replace("Kt_", "_")
+
+        for (dir in candidateDirs) {
+            if (!dir.exists() || !dir.isDirectory) continue
+            val pngFiles = dir.listFiles { f -> f.isFile && f.name.endsWith(".png", ignoreCase = true) }
+                ?: continue
+
+            val prefixMatch = pngFiles.firstOrNull { f ->
+                val nameNoExt = f.name.removeSuffix(".png")
+                nameNoExt.startsWith(baseSanitized, ignoreCase = true) ||
+                    nameNoExt.replace("Kt_", "_").startsWith(baseNoKt, ignoreCase = true)
+            }
+            if (prefixMatch != null) return prefixMatch
+
+            if (funcName.isNotBlank() && funcName.length >= 4) {
+                val funcMatch = pngFiles.firstOrNull { f ->
+                    f.name.contains(funcName, ignoreCase = true)
+                }
+                if (funcMatch != null) return funcMatch
+            }
+        }
         return null
     }
 
@@ -281,7 +486,8 @@ class CompositorDaemon(
         }
 
         if (updatedItem != null && updatedItem.status == PreviewRenderStatus.RENDERED) {
-            val imageUrl = updatedItem.imageUrl ?: "/api/previews/$previewId/image"
+            val imageUrl = updatedItem.imageUrl?.takeIf { !it.contains('#') }
+                ?: formatPreviewImageUrl(previewId)
             broadcast(DaemonWsMessage.previewUpdated(previewId, imageUrl, preview = updatedItem))
             call.respond(
                 HttpStatusCode.OK,
@@ -307,8 +513,10 @@ class CompositorDaemon(
         if (text.isBlank()) return
     }
 
-    private fun resolvePreviewId(rawParam: String?, queryParam: String?): String? =
-        if (!rawParam.isNullOrBlank()) rawParam else queryParam
+    private fun resolvePreviewId(rawParam: String?, queryParam: String?): String? {
+        val raw = if (!rawParam.isNullOrBlank()) rawParam else queryParam
+        return if (!raw.isNullOrBlank()) decodeSafely(raw) else null
+    }
 
     /**
      * Broadcasts a WebSocket message envelope to all actively connected clients.
@@ -362,7 +570,8 @@ class CompositorDaemon(
             renderHandler = renderHandler
         )
         dispatcher.onPreviewUpdated = { item ->
-            val imageUrl = item.imageUrl ?: "/api/previews/${item.id}/image"
+            val imageUrl = item.imageUrl?.takeIf { !it.contains('#') }
+                ?: formatPreviewImageUrl(item.id)
             broadcast(DaemonWsMessage.previewUpdated(item.id, imageUrl, preview = item))
         }
         dispatcher.start()

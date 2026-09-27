@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * Coordinates debounced file change events with AST parsing,
  * catalog indexing, and incremental preview rendering dispatch.
  */
+@Suppress("TooGenericExceptionCaught")
 class PreviewWatchDispatcher(
     val watcher: SourceDirectoryWatcher,
     val previewRegistry: PreviewRegistry,
@@ -56,7 +57,10 @@ class PreviewWatchDispatcher(
                         println("[Compositor Watcher] Dispatching event: ${event.kind} for ${event.file.name}")
                         handleFileChange(event)
                     } catch (t: Throwable) {
-                        System.err.println("[Compositor Watcher] Error handling file change for ${event.file.name}: ${t.message}")
+                        System.err.println(
+                            "[Compositor Watcher] Error handling file change " +
+                                "for ${event.file.name}: ${t.message}"
+                        )
                         t.printStackTrace()
                     }
                 }

@@ -144,7 +144,10 @@ class SourceDirectoryWatcher(
 
         pendingDebounceJobs[key] = coroutineScope.launch {
             delay(debounceDuration)
-            println("[Compositor Watcher] Debounce finished (${debounceDuration}) for ${event.file.name}, emitting event...")
+            println(
+                "[Compositor Watcher] Debounce finished ($debounceDuration) " +
+                    "for ${event.file.name}, emitting event..."
+            )
             _debouncedEvents.emit(event)
             pendingDebounceJobs.remove(key)
         }

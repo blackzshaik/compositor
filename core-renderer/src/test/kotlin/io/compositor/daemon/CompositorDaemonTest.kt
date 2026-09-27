@@ -10,6 +10,7 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.client.request.get
+import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
@@ -173,6 +174,116 @@ class CompositorDaemonTest {
         assertTrue(cacheControl?.contains("no-cache") == true)
         val contentType = response.headers[HttpHeaders.ContentType]
         assertTrue(contentType?.contains("image/png") == true)
+    }
+
+    @Test
+    fun testDirectPreviewGetReturnsImage() = testApplication {
+        val registry = PreviewRegistry()
+        val previewPng = File(tempDir, "direct_preview.png").apply {
+            writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A))
+        }
+
+        val item = createSamplePreview(imagePath = previewPng.absolutePath)
+        registry.updateFilePreviews(
+            filePath = "Greeting.kt",
+            definitions = listOf(item.definition),
+            moduleName = "app"
+        )
+        registry.updateRenderStatus(
+            previewId = item.id,
+            status = PreviewRenderStatus.RENDERED,
+            imagePath = previewPng.absolutePath
+        )
+
+        val daemon = CompositorDaemon(
+            port = 3001,
+            projectRoot = tempDir,
+            previewRegistry = registry
+        )
+
+        application {
+            daemon.configureApplication(this)
+        }
+
+        val client = createClient {}
+        val encodedId = java.net.URLEncoder.encode(item.id, "UTF-8")
+        val response = client.get("/api/previews/$encodedId")
+
+        assertEquals(HttpStatusCode.OK, response.status)
+        val contentType = response.headers[HttpHeaders.ContentType]
+        assertTrue(contentType?.contains("image/png") == true)
+    }
+
+    @Test
+    fun testDirectPreviewGetWithSubmoduleOrTagFuzzyMatch() = testApplication {
+        val registry = PreviewRegistry()
+        val appPreviewsDir = File(tempDir, "app/.compositor/previews").apply { mkdirs() }
+        val fuzzyPng = File(
+            appPreviewsDir,
+            "app_com_compositor_sample_GreetingKt_GreetingPreview_Default.png"
+        ).apply {
+            writeBytes(byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A))
+        }
+
+        val item = createSamplePreview(imagePath = fuzzyPng.absolutePath)
+        registry.updateFilePreviews(
+            filePath = "Greeting.kt",
+            definitions = listOf(item.definition),
+            moduleName = "app"
+        )
+
+        val daemon = CompositorDaemon(
+            port = 3001,
+            projectRoot = tempDir,
+            previewRegistry = registry
+        )
+
+        application {
+            daemon.configureApplication(this)
+        }
+
+        val client = createClient {}
+        // Omit #Default tag in request, simulating browser truncation
+        val requestedId = "app:com.compositor.sample.GreetingPreview"
+        val response = client.get("/api/previews/$requestedId")
+
+        assertEquals(HttpStatusCode.OK, response.status)
+        val contentType = response.headers[HttpHeaders.ContentType]
+        assertTrue(contentType?.contains("image/png") == true)
+    }
+
+    @Test
+    fun testDirectPreviewGetWithJsonAcceptReturnsMetadata() = testApplication {
+        val registry = PreviewRegistry()
+        val item = createSamplePreview()
+        registry.updateFilePreviews(
+            filePath = "Greeting.kt",
+            definitions = listOf(item.definition),
+            moduleName = "app"
+        )
+
+        val daemon = CompositorDaemon(
+            port = 3001,
+            projectRoot = tempDir,
+            previewRegistry = registry
+        )
+
+        application {
+            daemon.configureApplication(this)
+        }
+
+        val client = createClient {
+            install(ContentNegotiation) { json(json) }
+        }
+
+        val encodedId = java.net.URLEncoder.encode(item.id, "UTF-8")
+        val response = client.get("/api/previews/$encodedId") {
+            header(HttpHeaders.Accept, "application/json")
+        }
+
+        assertEquals(HttpStatusCode.OK, response.status)
+        val body = response.body<PreviewItem>()
+        assertEquals(item.id, body.id)
     }
 
     @Test

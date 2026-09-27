@@ -64,7 +64,7 @@ object KotlinSourceCompiler {
      * Compiles a single Kotlin source file into the specified output directory
      * using the provided project classpath and Compose compiler plugin.
      */
-    @Suppress("TooGenericExceptionCaught")
+    @Suppress("TooGenericExceptionCaught", "LongMethod")
     fun compile(
         sourceFile: File,
         outputDir: File,
@@ -92,15 +92,24 @@ object KotlinSourceCompiler {
 
         val compiler = K2JVMCompiler()
         val startTime = System.currentTimeMillis()
-        println("[Compositor Compiler] Compiling ${sourceFile.name} (hasCompose=$hasCompose, plugin=${pluginJar != null})...")
+        println(
+            "[Compositor Compiler] Compiling ${sourceFile.name} " +
+                "(hasCompose=$hasCompose, plugin=${pluginJar != null})..."
+        )
         return try {
             val exitCode = compiler.exec(collector, Services.EMPTY, args)
             val durationMs = System.currentTimeMillis() - startTime
             val success = exitCode.code == 0
             if (success) {
-                println("[Compositor Compiler] Compiled ${sourceFile.name} successfully in ${durationMs}ms -> ${outputDir.path}")
+                println(
+                    "[Compositor Compiler] Compiled ${sourceFile.name} successfully " +
+                        "in ${durationMs}ms -> ${outputDir.path}"
+                )
             } else {
-                System.err.println("[Compositor Compiler] Compilation FAILED for ${sourceFile.name} with exit code ${exitCode.code} in ${durationMs}ms")
+                System.err.println(
+                    "[Compositor Compiler] Compilation FAILED for ${sourceFile.name} " +
+                        "with exit code ${exitCode.code} in ${durationMs}ms"
+                )
                 for (err in errors) {
                     System.err.println("  $err")
                 }
@@ -115,7 +124,10 @@ object KotlinSourceCompiler {
             )
         } catch (e: Exception) {
             val durationMs = System.currentTimeMillis() - startTime
-            System.err.println("[Compositor Compiler] Exception during compilation of ${sourceFile.name} in ${durationMs}ms: ${e.message}")
+            System.err.println(
+                "[Compositor Compiler] Exception during compilation of " +
+                    "${sourceFile.name} in ${durationMs}ms: ${e.message}"
+            )
             val sw = StringWriter()
             e.printStackTrace(PrintWriter(sw))
             CompilationResult(

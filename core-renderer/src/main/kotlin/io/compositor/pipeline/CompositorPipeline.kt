@@ -10,6 +10,7 @@ import io.compositor.parser.PreviewItem
 import io.compositor.parser.PreviewRegistry
 import io.compositor.parser.PreviewRenderStatus
 import io.compositor.parser.RenderStateUpdate
+import io.compositor.parser.formatPreviewImageUrl
 import io.compositor.renderer.CompositorDeviceConfig
 import io.compositor.renderer.LayoutLibPreviewRenderer
 import io.compositor.renderer.RenderRequest
@@ -148,6 +149,7 @@ class CompositorPipeline(
      * Renders a specific preview in-memory using LayoutLib and updates the catalog.
      */
     @Synchronized
+    @Suppress("LongMethod", "TooGenericExceptionCaught")
     fun renderPreview(previewId: String): PreviewItem? {
         val item = previewRegistry.getCatalog().previews[previewId] ?: return null
         println("[Compositor Pipeline] Starting renderPreview for: $previewId")
@@ -181,7 +183,7 @@ class CompositorPipeline(
                             status = PreviewRenderStatus.RENDERED,
                             durationMs = result.durationMs,
                             imagePath = result.imageFile.absolutePath,
-                            imageUrl = "/api/previews/$previewId/image",
+                            imageUrl = formatPreviewImageUrl(previewId),
                             rootBounds = result.rootBounds
                         )
                     )
@@ -306,8 +308,9 @@ class CompositorPipeline(
                         println("[Compositor Pipeline] Broadcasting RENDER_ERROR for: ${updatedItem.id}")
                         daemon.broadcast(DaemonWsMessage.renderError(updatedItem.id, errorMsg))
                     } else {
-                        val url = updatedItem.imageUrl ?: "/api/previews/${updatedItem.id}/image"
-                        println("[Compositor Pipeline] Broadcasting PREVIEW_UPDATED for: ${updatedItem.id} (image: $url)")
+                        val url = updatedItem.imageUrl?.takeIf { !it.contains('#') }
+                            ?: formatPreviewImageUrl(updatedItem.id)
+                        println("[Compositor Pipeline] Broadcasting PREVIEW_UPDATED for: ${updatedItem.id}")
                         daemon.broadcast(
                             DaemonWsMessage.previewUpdated(updatedItem.id, url, preview = updatedItem)
                         )
