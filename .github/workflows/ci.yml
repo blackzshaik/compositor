@@ -74,6 +74,11 @@ jobs:
           npm ci
           npm run build
 
+      - name: Publish to Maven Local
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.java.home=${{ env.JAVA_HOME }}"
+        run: ./gradlew publishToMavenLocal --no-daemon
+
       - name: Compile and Run Scoped Unit Tests
         env:
           GRADLE_OPTS: "-Dorg.gradle.java.home=${{ env.JAVA_HOME }}"

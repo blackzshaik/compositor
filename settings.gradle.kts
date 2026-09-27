@@ -21,5 +21,10 @@ rootProject.name = "compositor"
 include(":core-renderer")
 include(":plugin")
 include(":web-viewer")
-include(":samples:sample-app")
+
+val mavenLocalPlugin = file("${System.getProperty("user.home")}/.m2/repository/io/compositor/plugin")
+val isPublishing = gradle.startParameter.taskNames.any { it.contains("publishToMavenLocal", ignoreCase = true) }
+if (mavenLocalPlugin.exists() && !isPublishing) {
+    include(":samples:sample-app")
+}
 
