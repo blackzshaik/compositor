@@ -60,7 +60,7 @@ object AndroidBuildBootstrap {
             for ((name, value) in versionStringFields) {
                 setStaticFieldIfNull(unsafe, versionClass, name, value)
             }
-            setIntStaticFieldIfZero(unsafe, versionClass, "SDK_INT", 35)
+            setIntStaticField(unsafe, versionClass, "SDK_INT", 34)
         } catch (_: Throwable) {
             // Ignored if android.os.Build$VERSION is not on this classloader
         }
@@ -77,14 +77,12 @@ object AndroidBuildBootstrap {
         } catch (_: Throwable) {}
     }
 
-    private fun setIntStaticFieldIfZero(unsafe: Unsafe, targetClass: Class<*>, fieldName: String, value: Int) {
+    private fun setIntStaticField(unsafe: Unsafe, targetClass: Class<*>, fieldName: String, value: Int) {
         try {
             val field: Field = targetClass.getDeclaredField(fieldName)
             val base = unsafe.staticFieldBase(field)
             val offset = unsafe.staticFieldOffset(field)
-            if (unsafe.getInt(base, offset) == 0) {
-                unsafe.putInt(base, offset, value)
-            }
+            unsafe.putInt(base, offset, value)
         } catch (_: Throwable) {}
     }
 

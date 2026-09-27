@@ -163,7 +163,7 @@ class LayoutLibPreviewRenderer(
         return Environment(
             appTestDir = "",
             packageName = appPackageName,
-            compileSdkVersion = request.compileSdkVersion,
+            compileSdkVersion = request.compileSdkVersion.coerceAtMost(34),
             resourcePackageNames = rPackages,
             localResourceDirs = localResDirs,
             moduleResourceDirs = emptyList(),
