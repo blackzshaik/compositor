@@ -22,6 +22,19 @@ export interface PreviewCatalogState {
   httpBase: string;
 }
 
+interface WsPayload {
+  preview?: PreviewItem;
+  previewId?: string;
+  timestamp?: number;
+  url?: string;
+  error?: string | { message?: string; stack?: string };
+}
+
+interface WsMessage {
+  event: string;
+  payload: WsPayload;
+}
+
 declare global {
   interface Window {
     __COMPOSITOR_CONFIG__?: {
@@ -235,11 +248,11 @@ export const PreviewCatalogProvider: React.FC<{ children: React.ReactNode }> = (
             }
 
             if (!message || typeof message !== 'object') return;
-            const { event: eventName, payload } = message as { event: string; payload: Record<string, unknown> };
+            const { event: eventName, payload } = message as unknown as WsMessage;
             if (!eventName || !payload) return;
 
             if (eventName === 'PREVIEW_REGISTERED' && payload.preview) {
-              const item = payload.preview as PreviewItem;
+              const item = payload.preview;
               console.info('[Compositor WS] PREVIEW_REGISTERED:', item.id);
               setCatalog((prev) => {
                 if (!prev) return prev;
@@ -251,8 +264,8 @@ export const PreviewCatalogProvider: React.FC<{ children: React.ReactNode }> = (
                 };
               });
             } else if (eventName === 'PREVIEW_RENDER_STARTED' && payload.previewId) {
-              const previewId = payload.previewId as string;
-              const startedAt = (payload.timestamp as number) ?? Date.now();
+              const previewId = payload.previewId;
+              const startedAt = payload.timestamp ?? Date.now();
               console.info(`[Compositor WS] PREVIEW_RENDER_STARTED for ${previewId} (timestamp: ${startedAt})`);
 
               setCatalog((prev) => {
@@ -276,9 +289,9 @@ export const PreviewCatalogProvider: React.FC<{ children: React.ReactNode }> = (
                 };
               });
             } else if (eventName === 'PREVIEW_UPDATED' && payload.previewId) {
-              const previewId = payload.previewId as string;
-              const timestamp = (payload.timestamp as number) ?? Date.now();
-              const rawUrl = (payload.url as string) || `/api/previews/${encodeURIComponent(previewId)}/image`;
+              const previewId = payload.previewId;
+              const timestamp = payload.timestamp ?? Date.now();
+              const rawUrl = payload.url || `/api/previews/${encodeURIComponent(previewId)}/image`;
               const freshUrl = rawUrl.includes('?')
                 ? (rawUrl.includes('t=') ? rawUrl : `${rawUrl}&t=${timestamp}`)
                 : `${rawUrl}?t=${timestamp}`;
@@ -317,13 +330,13 @@ export const PreviewCatalogProvider: React.FC<{ children: React.ReactNode }> = (
               console.error(`[Compositor WS] RENDER_ERROR for ${previewId}:`, payload.error);
 
               setCatalog((prev) => {
-                if (!prev || !prev.previews[payload.previewId]) return prev;
+                if (!prev || !prev.previews[previewId]) return prev;
                 return {
                   ...prev,
                   previews: {
                     ...prev.previews,
-                    [payload.previewId]: {
-                      ...prev.previews[payload.previewId],
+                    [previewId]: {
+                      ...prev.previews[previewId],
                       status: 'Error',
                       errorDetails: typeof payload.error === 'string' ? payload.error : JSON.stringify(payload.error),
                     },
@@ -333,14 +346,20 @@ export const PreviewCatalogProvider: React.FC<{ children: React.ReactNode }> = (
 
               // Format and display diagnostic error
               const rawError = payload.error || 'Rendering failure';
-              const messageStr = typeof rawError === 'string' ? rawError : rawError.message || JSON.stringify(rawError);
-              const stackStr = typeof rawError === 'object' && rawError.stack ? rawError.stack : undefined;
+              const messageStr = typeof rawError === 'string'
+                ? rawError
+                : (typeof rawError === 'object' && rawError !== null && 'message' in rawError && rawError.message
+                    ? String(rawError.message)
+                    : JSON.stringify(rawError));
+              const stackStr = typeof rawError === 'object' && rawError !== null && 'stack' in rawError
+                ? String(rawError.stack)
+                : undefined;
 
               // Try parsing file and line info (e.g. at Greeting.kt:14 or (Greeting.kt:14))
               const match = messageStr.match(/([a-zA-Z0-9_-]+\.kt):(\d+)(?::(\d+))?/);
 
               setErrorDiagnosticRef.current({
-                previewId: payload.previewId,
+                previewId,
                 title: 'Compose Render Failure',
                 message: messageStr,
                 filePath: match ? match[1] : undefined,
