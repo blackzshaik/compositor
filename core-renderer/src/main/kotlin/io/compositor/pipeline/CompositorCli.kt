@@ -22,10 +22,13 @@ data class CompositorCliConfig(
     val mode: String = "daemon",
     val projectRoot: String = ".",
     val port: Int = 3001,
+    val packageName: String? = null,
+    val compileSdkVersion: Int = 35,
     val watchRoots: List<String> = emptyList(),
     val classesDirs: List<String> = emptyList(),
     val compileClasspath: List<String> = emptyList(),
     val resourceDirs: List<String> = emptyList(),
+    val libraryResourceDirs: List<String> = emptyList(),
     val rJar: String? = null,
     val layoutLibDataDir: String? = null,
     val outputDir: String? = null,
@@ -36,10 +39,13 @@ data class CompositorCliConfig(
         return PipelineConfig(
             projectRoot = root,
             port = port,
+            packageName = packageName,
+            compileSdkVersion = compileSdkVersion,
             watchRoots = watchRoots.map { File(it) },
             classesDirs = classesDirs.map { File(it) },
             compileClasspath = compileClasspath.map { File(it) },
             resourceDirs = resourceDirs.map { File(it) },
+            libraryResourceDirs = libraryResourceDirs.map { File(it) },
             rJar = rJar?.let { File(it) },
             outputDir = if (outputDir != null) File(outputDir) else File(root, ".compositor/previews")
         )

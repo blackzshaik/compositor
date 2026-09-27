@@ -27,8 +27,11 @@ object AndroidClasspathResolver {
         val baseExtension = project.extensions.findByType(BaseExtension::class.java)
         val (androidJar, layoutLibDataDir) = resolveAndroidSdk(baseExtension)
 
+        val packageName = resolvePackageName(project, baseExtension)
+        val compileSdkVersion = resolveCompileSdkVersion(baseExtension)
         val compiledClassesDirs = resolveCompiledClasses(project, variantName, capVariant)
-        val mergedResourceDirs = resolveMergedResources(project, variantName, capVariant)
+        val mergedResourceDirs = resolveMergedResources(project, baseExtension, variantName, capVariant)
+        val libraryResourceDirs = resolveLibraryResources(project, variantName)
         val rJar = resolveRJar(project, variantName, capVariant)
         val dependencyClasspath = resolveDependencies(project, variantName)
         val compileClasspath = resolveCompileDependencies(project, variantName)
@@ -37,10 +40,13 @@ object AndroidClasspathResolver {
         return CompositorProjectContext(
             projectRoot = project.projectDir,
             variantName = variantName,
+            packageName = packageName,
+            compileSdkVersion = compileSdkVersion,
             compiledClassesDirs = compiledClassesDirs,
             dependencyClasspathFiles = dependencyClasspath,
             compileClasspathFiles = compileClasspath,
             mergedResourceDirs = mergedResourceDirs,
+            libraryResourceDirs = libraryResourceDirs,
             rJar = rJar,
             androidJar = androidJar,
             layoutLibDataDir = layoutLibDataDir,
@@ -61,9 +67,11 @@ object AndroidClasspathResolver {
             "android-$rawCompileSdk"
         }
 
-        val platformDir = File(sdkDir, "platforms/$platformDirName")
-        val androidJar = File(platformDir, "android.jar").takeIf { it.exists() }
-        val layoutLibDataDir = File(platformDir, "data").takeIf { it.exists() }
+        val platformDir = File(sdkDir, "platforms/$platformDirName").takeIf { it.exists() }
+            ?: File(sdkDir, "platforms").listFiles()?.firstOrNull { it.isDirectory && File(it, "android.jar").exists() }
+
+        val androidJar = platformDir?.let { File(it, "android.jar").takeIf { f -> f.exists() } }
+        val layoutLibDataDir = platformDir?.let { File(it, "data").takeIf { f -> f.exists() } }
 
         return Pair(androidJar, layoutLibDataDir)
     }
@@ -74,20 +82,91 @@ object AndroidClasspathResolver {
         capVariant: String
     ): List<File> {
         val classes = mutableListOf<File>()
+        val candidates = listOf(
+            project.layout.buildDirectory.dir("tmp/kotlin-classes/$variantName").get().asFile,
+            project.layout.buildDirectory.dir(
+                "intermediates/built_in_kotlinc/$variantName/compile${capVariant}Kotlin/classes"
+            ).get().asFile,
+            project.layout.buildDirectory.dir(
+                "intermediates/javac/$variantName/compile${capVariant}JavaWithJavac/classes"
+            ).get().asFile,
+            project.layout.buildDirectory.dir("intermediates/javac/$variantName/classes").get().asFile
+        )
 
-        val kotlinDir = project.layout.buildDirectory.dir("tmp/kotlin-classes/$variantName").get().asFile
-        if (kotlinDir.exists()) classes.add(kotlinDir)
-
-        val javaDir = project.layout.buildDirectory.dir(
-            "intermediates/javac/$variantName/compile${capVariant}JavaWithJavac/classes"
-        ).get().asFile
-        if (javaDir.exists()) classes.add(javaDir)
+        for (candidate in candidates) {
+            if (candidate.exists() && !classes.contains(candidate)) {
+                classes.add(candidate)
+            }
+        }
 
         return classes
     }
 
+    private fun resolvePackageName(project: Project, baseExtension: BaseExtension?): String? {
+        val namespace = try {
+            baseExtension?.namespace
+        } catch (_: Throwable) {
+            null
+        }
+        if (!namespace.isNullOrBlank()) return namespace
+
+        val appId = try {
+            baseExtension?.defaultConfig?.applicationId
+        } catch (_: Throwable) {
+            null
+        }
+        if (!appId.isNullOrBlank()) return appId
+
+        val manifestFile = File(project.projectDir, "src/main/AndroidManifest.xml")
+        if (manifestFile.exists()) {
+            val content = manifestFile.readText()
+            val match = Regex("""package\s*=\s*["']([^"']+)["']""").find(content)
+            if (match != null) {
+                return match.groupValues[1]
+            }
+        }
+
+        return null
+    }
+
+    private fun resolveCompileSdkVersion(baseExtension: BaseExtension?): Int {
+        val raw = baseExtension?.compileSdkVersion ?: return 35
+        val digits = raw.filter { it.isDigit() }
+        return digits.toIntOrNull() ?: 35
+    }
+
+    private fun resolveLibraryResources(project: Project, variantName: String): List<File> {
+        val libResources = mutableListOf<File>()
+        val configName = "${variantName}RuntimeClasspath"
+        val runtimeConfig = project.configurations.findByName(configName)
+
+        if (runtimeConfig != null && runtimeConfig.isCanBeResolved) {
+            try {
+                val artifactView = runtimeConfig.incoming.artifactView { viewConfig ->
+                    viewConfig.lenient(true)
+                    viewConfig.attributes { attrs ->
+                        attrs.attribute(
+                            Attribute.of("artifactType", String::class.java),
+                            "android-res"
+                        )
+                    }
+                }
+                for (file in artifactView.artifacts.artifactFiles.files) {
+                    if (file.exists() && !libResources.contains(file)) {
+                        libResources.add(file)
+                    }
+                }
+            } catch (_: Throwable) {
+                // Lenient resolution failure ignored
+            }
+        }
+
+        return libResources
+    }
+
     private fun resolveMergedResources(
         project: Project,
+        baseExtension: BaseExtension?,
         variantName: String,
         capVariant: String
     ): List<File> {
@@ -100,15 +179,34 @@ object AndroidClasspathResolver {
                 "intermediates/merged_res/$variantName/merge${capVariant}Resources/merged.dir"
             ).get().asFile,
             project.layout.buildDirectory.dir(
+                "intermediates/merged_res/$variantName/merge${capVariant}Resources"
+            ).get().asFile,
+            project.layout.buildDirectory.dir(
                 "intermediates/incremental/$variantName/package${capVariant}Resources/merged.dir"
             ).get().asFile,
-            File(project.projectDir, "src/main/res")
+            project.layout.buildDirectory.dir(
+                "intermediates/packaged_res/$variantName/package${capVariant}Resources"
+            ).get().asFile,
+            File(project.projectDir, "src/main/res"),
+            File(project.projectDir, "src/$variantName/res")
         )
 
         for (candidate in candidates) {
             if (candidate.exists() && !resDirs.contains(candidate)) {
                 resDirs.add(candidate)
             }
+        }
+
+        try {
+            baseExtension?.sourceSets?.forEach { sourceSet ->
+                sourceSet.res.srcDirs.forEach { dir ->
+                    if (dir.exists() && !resDirs.contains(dir)) {
+                        resDirs.add(dir)
+                    }
+                }
+            }
+        } catch (_: Throwable) {
+            // Ignore if sourceSets cannot be queried
         }
 
         return resDirs
@@ -119,12 +217,17 @@ object AndroidClasspathResolver {
         variantName: String,
         capVariant: String
     ): File? {
-        val rJarFile = project.layout.buildDirectory.file(
-            "intermediates/compile_and_runtime_not_namespaced_r_class_jar/" +
-                "$variantName/process${capVariant}Resources/R.jar"
-        ).get().asFile
+        val candidates = listOf(
+            project.layout.buildDirectory.file(
+                "intermediates/compile_and_runtime_r_class_jar/$variantName/process${capVariant}Resources/R.jar"
+            ).get().asFile,
+            project.layout.buildDirectory.file(
+                "intermediates/compile_and_runtime_not_namespaced_r_class_jar/" +
+                    "$variantName/process${capVariant}Resources/R.jar"
+            ).get().asFile
+        )
 
-        return if (rJarFile.exists()) rJarFile else null
+        return candidates.firstOrNull { it.exists() }
     }
 
     private fun resolveDependencies(project: Project, variantName: String): List<File> {
@@ -200,3 +303,5 @@ object AndroidClasspathResolver {
         return candidates.filter { it.exists() }
     }
 }
+
+

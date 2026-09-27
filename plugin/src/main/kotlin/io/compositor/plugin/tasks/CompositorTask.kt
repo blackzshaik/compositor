@@ -7,13 +7,18 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
+import org.gradle.process.ExecOperations
 import java.io.File
+import javax.inject.Inject
 
 /**
  * Gradle task that starts the interactive Compositor preview daemon,
  * launches the web viewer in the default browser, and streams live updates.
  */
 abstract class CompositorTask : DefaultTask() {
+
+    @get:Inject
+    abstract val execOperations: ExecOperations
 
     @get:Input
     abstract val port: Property<Int>
@@ -51,6 +56,8 @@ abstract class CompositorTask : DefaultTask() {
         val resEscaped = context.mergedResourceDirs.joinToString(",") { "\"${escape(it.absolutePath)}\"" }
         val rJarEscaped = context.rJar?.let { "\"${escape(it.absolutePath)}\"" } ?: "null"
         val layoutLibEscaped = context.layoutLibDataDir?.let { "\"${escape(it.absolutePath)}\"" } ?: "null"
+        val libraryResEscaped = context.libraryResourceDirs.joinToString(",") { "\"${escape(it.absolutePath)}\"" }
+        val pkgEscaped = context.packageName?.let { "\"${escape(it)}\"" } ?: "null"
         val outEscaped = escape(previewsDir.absolutePath)
 
         configFile.writeText(
@@ -59,10 +66,13 @@ abstract class CompositorTask : DefaultTask() {
               "mode": "daemon",
               "projectRoot": "$rootEscaped",
               "port": ${port.get()},
+              "packageName": $pkgEscaped,
+              "compileSdkVersion": ${context.compileSdkVersion},
               "watchRoots": [$watchEscaped],
               "classesDirs": [$classesEscaped],
               "compileClasspath": [$compileEscaped],
               "resourceDirs": [$resEscaped],
+              "libraryResourceDirs": [$libraryResEscaped],
               "rJar": $rJarEscaped,
               "layoutLibDataDir": $layoutLibEscaped,
               "outputDir": "$outEscaped",
@@ -74,7 +84,7 @@ abstract class CompositorTask : DefaultTask() {
         val runtimeClasspath = project.configurations.getByName(CompositorPlugin.COMPOSITOR_RUNTIME_CONFIG)
         val fullClasspath = runtimeClasspath + project.files(context.allClasspathFiles())
 
-        project.javaexec { spec ->
+        execOperations.javaexec { spec ->
             spec.mainClass.set("io.compositor.pipeline.CompositorCli")
             spec.classpath = fullClasspath
             spec.args = listOf(configFile.absolutePath)

@@ -14,7 +14,11 @@ class CompositorClassLoader(
     override fun loadClass(name: String, resolve: Boolean): Class<*> {
         // System and framework classes MUST delegate to parent
         if (isParentDelegated(name)) {
-            return super.loadClass(name, resolve)
+            return try {
+                super.loadClass(name, resolve)
+            } catch (_: ClassNotFoundException) {
+                findClass(name)
+            }
         }
 
         // For project classes, attempt loading from local URLs first

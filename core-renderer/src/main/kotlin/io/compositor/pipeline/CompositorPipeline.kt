@@ -19,7 +19,6 @@ import io.compositor.watcher.SourceDirectoryWatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
@@ -30,10 +29,13 @@ import java.util.concurrent.atomic.AtomicBoolean
 data class PipelineConfig(
     val projectRoot: File = File("."),
     val port: Int = CompositorDaemon.DEFAULT_PORT,
+    val packageName: String? = null,
+    val compileSdkVersion: Int = 35,
     val watchRoots: List<File> = listOf(File(projectRoot, "src")),
     val classesDirs: List<File> = emptyList(),
     val compileClasspath: List<File> = emptyList(),
     val resourceDirs: List<File> = emptyList(),
+    val libraryResourceDirs: List<File> = emptyList(),
     val rJar: File? = null,
     val outputDir: File = File(projectRoot, ".compositor/previews")
 )
@@ -227,6 +229,10 @@ class CompositorPipeline(
             methodName = def.functionName,
             classpath = classpathList,
             resourceDirs = config.resourceDirs,
+            libraryResourceDirs = config.libraryResourceDirs,
+            rJar = config.rJar,
+            packageName = config.packageName,
+            compileSdkVersion = config.compileSdkVersion,
             deviceConfig = CompositorDeviceConfig.PIXEL_5,
             outputFile = outputFile
         )

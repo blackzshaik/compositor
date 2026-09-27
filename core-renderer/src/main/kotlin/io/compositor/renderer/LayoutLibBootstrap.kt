@@ -102,7 +102,11 @@ object LayoutLibBootstrap {
         if (!dir.exists() || !dir.isDirectory) return false
         val resDir = File(dir, "res")
         val attrsXml = File(resDir, "values/attrs.xml")
-        return resDir.exists() && attrsXml.exists()
+        val directAttrsXml = File(dir, "values/attrs.xml")
+        val frameworkRes = File(dir, "framework_res.jar")
+        val dataFrameworkRes = File(dir, "data/framework_res.jar")
+        val hasAttrs = (resDir.exists() && attrsXml.exists()) || directAttrsXml.exists()
+        return hasAttrs || frameworkRes.exists() || dataFrameworkRes.exists()
     }
 
     /**
@@ -160,7 +164,8 @@ object LayoutLibBootstrap {
         val dataDir = File(dir, "data")
         val buildProp = File(dir, "build.prop")
         val dataBuildProp = File(dataDir, "build.prop")
-        return dataDir.exists() && (buildProp.exists() || dataBuildProp.exists())
+        val hasFontsOrRes = File(dataDir, "fonts").exists() || File(dataDir, "framework_res.jar").exists()
+        return dataDir.exists() && (buildProp.exists() || dataBuildProp.exists() || hasFontsOrRes)
     }
 
     /**

@@ -45,8 +45,9 @@ class KotlinPsiPreviewScanner {
      * Parses the Kotlin source code string and extracts all `@Preview` definitions.
      */
     fun parseSource(source: String, filePath: String = ""): List<PreviewDefinition> {
-        val ktFile = psiFactory.createFile("preview_scan.kt", source)
-        return extractPreviewsFromFile(ktFile, source, filePath)
+        val normalized = source.replace("\r\n", "\n").replace('\r', '\n')
+        val ktFile = psiFactory.createFile("preview_scan.kt", normalized)
+        return extractPreviewsFromFile(ktFile, normalized, filePath)
     }
 
     /**
@@ -57,8 +58,9 @@ class KotlinPsiPreviewScanner {
             return emptyList()
         }
         val source = file.readText()
-        val ktFile = psiFactory.createFile(file.name, source)
-        return extractPreviewsFromFile(ktFile, source, file.invariantSeparatorsPath)
+        val normalized = source.replace("\r\n", "\n").replace('\r', '\n')
+        val ktFile = psiFactory.createFile(file.name, normalized)
+        return extractPreviewsFromFile(ktFile, normalized, file.invariantSeparatorsPath)
     }
 
     /**

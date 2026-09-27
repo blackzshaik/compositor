@@ -9,10 +9,13 @@ import java.io.File
 data class CompositorProjectContext(
     val projectRoot: File,
     val variantName: String,
+    val packageName: String? = null,
+    val compileSdkVersion: Int = 35,
     val compiledClassesDirs: List<File> = emptyList(),
     val dependencyClasspathFiles: List<File> = emptyList(),
     val compileClasspathFiles: List<File> = emptyList(),
     val mergedResourceDirs: List<File> = emptyList(),
+    val libraryResourceDirs: List<File> = emptyList(),
     val rJar: File? = null,
     val androidJar: File? = null,
     val layoutLibDataDir: File? = null,

@@ -9,6 +9,7 @@ import java.awt.image.BufferedImage
 import java.io.File
 import java.io.PrintWriter
 import java.io.StringWriter
+import java.util.jar.JarFile
 import javax.imageio.ImageIO
 import kotlin.jvm.functions.Function2
 
@@ -85,7 +86,7 @@ class LayoutLibPreviewRenderer(
         classLoader: ClassLoader,
         startTime: Long
     ): RenderResult {
-        val environment = createEnvironment(request)
+        val environment = createEnvironment(request, classLoader)
         val deviceConfig = resolveDeviceConfig(request.deviceConfig)
 
         var capturedImage: BufferedImage? = null
@@ -144,33 +145,146 @@ class LayoutLibPreviewRenderer(
         )
     }
 
-    private fun createEnvironment(request: RenderRequest): Environment {
-        val pkg = request.className.substringBeforeLast(".", "")
-        val localResDirs = request.resourceDirs.map { it.absolutePath }
-
-        val rClassAvailable = if (pkg.isNotEmpty()) {
-            try {
-                Class.forName("$pkg.R") != null
-            } catch (_: ClassNotFoundException) {
-                false
-            } catch (_: LinkageError) {
-                false
-            }
-        } else {
-            false
+    private fun createEnvironment(request: RenderRequest, classLoader: ClassLoader): Environment {
+        val rJarFile = request.rJar ?: request.classpath.firstOrNull {
+            it.name.equals("R.jar", ignoreCase = true)
         }
+
+        val appPackageName = discoverApplicationPackage(request, classLoader, rJarFile)
+        val rPackages = discoverRPackages(request, appPackageName, rJarFile, classLoader)
+        val localResDirs = request.resourceDirs.map { it.absolutePath }
+        val libResDirs = request.libraryResourceDirs.map { it.absolutePath }
+
+        println(
+            "[Compositor Renderer] Configured Environment: appPackage=$appPackageName, " +
+                "rPackages=$rPackages, localResCount=${localResDirs.size}, libResCount=${libResDirs.size}"
+        )
 
         return Environment(
             appTestDir = "",
-            packageName = pkg,
-            compileSdkVersion = 35,
-            resourcePackageNames = if (rClassAvailable) listOf(pkg) else emptyList(),
+            packageName = appPackageName,
+            compileSdkVersion = request.compileSdkVersion,
+            resourcePackageNames = rPackages,
             localResourceDirs = localResDirs,
             moduleResourceDirs = emptyList(),
-            libraryResourceDirs = emptyList(),
+            libraryResourceDirs = libResDirs,
             allModuleAssetDirs = emptyList(),
             libraryAssetDirs = emptyList()
         )
+    }
+
+    private fun discoverApplicationPackage(
+        request: RenderRequest,
+        classLoader: ClassLoader,
+        rJarFile: File?
+    ): String {
+        if (!request.packageName.isNullOrBlank()) {
+            return request.packageName
+        }
+
+        val classPkg = request.className.substringBeforeLast(".", "")
+        return resolvePackageFromHierarchy(classPkg, classLoader)
+            ?: resolvePackageFromRJar(classPkg, rJarFile)
+            ?: classPkg
+    }
+
+    private fun resolvePackageFromHierarchy(classPkg: String, classLoader: ClassLoader): String? {
+        if (classPkg.isEmpty()) return null
+        val parts = classPkg.split('.')
+        for (i in parts.size downTo 1) {
+            val candidate = parts.take(i).joinToString(".")
+            if (hasRClass(candidate, classLoader)) {
+                return candidate
+            }
+        }
+        return null
+    }
+
+    private fun resolvePackageFromRJar(classPkg: String, rJarFile: File?): String? {
+        if (rJarFile == null || !rJarFile.exists()) return null
+        val jarPackages = extractPackagesFromJar(rJarFile)
+        if (classPkg.isNotEmpty()) {
+            val bestMatch = jarPackages
+                .filter { classPkg.startsWith(it) }
+                .maxByOrNull { it.length }
+            if (bestMatch != null) return bestMatch
+        }
+        return jarPackages.firstOrNull {
+            !it.startsWith("android") && !it.startsWith("androidx") && !it.startsWith("com.google")
+        }
+    }
+
+    private fun discoverRPackages(
+        request: RenderRequest,
+        appPackageName: String,
+        rJarFile: File?,
+        classLoader: ClassLoader
+    ): List<String> {
+        val candidates = LinkedHashSet<String>()
+
+        if (appPackageName.isNotBlank()) {
+            candidates.add(appPackageName)
+        }
+
+        if (rJarFile != null && rJarFile.exists()) {
+            candidates.addAll(extractPackagesFromJar(rJarFile))
+        }
+
+        for (file in request.classpath) {
+            val isRJar = file.isFile && file.name.endsWith(".jar", ignoreCase = true) &&
+                file.name.contains("R", ignoreCase = true)
+            if (isRJar) {
+                candidates.addAll(extractPackagesFromJar(file))
+            }
+        }
+
+        val validPackages = mutableListOf<String>()
+        for (pkg in candidates) {
+            if (hasRClass(pkg, classLoader)) {
+                validPackages.add(pkg)
+            }
+        }
+
+        return validPackages
+    }
+
+    private fun hasRClass(packageName: String, classLoader: ClassLoader): Boolean {
+        val className = if (packageName.isEmpty()) "R" else "$packageName.R"
+        return try {
+            Class.forName(className, false, classLoader) != null
+        } catch (_: ClassNotFoundException) {
+            try {
+                classLoader.loadClass(className) != null
+            } catch (_: Throwable) {
+                false
+            }
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    private fun extractPackagesFromJar(jarFile: File): List<String> {
+        val packages = mutableSetOf<String>()
+        try {
+            JarFile(jarFile).use { jar ->
+                val entries = jar.entries()
+                while (entries.hasMoreElements()) {
+                    val entry = entries.nextElement()
+                    if (entry.name.endsWith("/R.class") || entry.name.contains("/R$")) {
+                        val pkg = entry.name.substringBeforeLast("/R").replace('/', '.')
+                        if (pkg.isNotEmpty()) {
+                            packages.add(pkg)
+                        }
+                    } else if (entry.name == "R.class") {
+                        packages.add("")
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            val msg = "[Compositor Renderer] Warning: Failed to extract packages from ${jarFile.name}: ${e.message}"
+            System.err.println(msg)
+        }
+        return packages.toList()
     }
 
     private fun resolveDeviceConfig(config: CompositorDeviceConfig): DeviceConfig {

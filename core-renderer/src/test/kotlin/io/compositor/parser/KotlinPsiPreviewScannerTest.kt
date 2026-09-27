@@ -220,4 +220,15 @@ class KotlinPsiPreviewScannerTest {
             "Expected 30 parses to finish swiftly, took ${elapsed}ms"
         )
     }
+
+    @Test
+    fun `parses previews with Windows CRLF line endings`() {
+        val crlfSource = "package com.example.ui\r\n\r\n" +
+            "import androidx.compose.ui.tooling.preview.Preview\r\n\r\n" +
+            "@Preview\r\nfun CrlfPreview() {}\r\n"
+        val previews = scanner.parseSource(crlfSource)
+        assertEquals(1, previews.size)
+        assertEquals("CrlfPreview", previews[0].functionName)
+    }
 }
+

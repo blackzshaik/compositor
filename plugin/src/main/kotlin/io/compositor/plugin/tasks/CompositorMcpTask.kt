@@ -7,13 +7,18 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
+import org.gradle.process.ExecOperations
 import java.io.File
+import javax.inject.Inject
 
 /**
  * Gradle task that starts the headless Compositor Model Context Protocol (MCP) server
  * over standard I/O for AI coding agents (such as Antigravity, Cursor, and Claude Code).
  */
 abstract class CompositorMcpTask : DefaultTask() {
+
+    @get:Inject
+    abstract val execOperations: ExecOperations
 
     @get:Input
     abstract val variantName: Property<String>
@@ -38,6 +43,8 @@ abstract class CompositorMcpTask : DefaultTask() {
         val resEscaped = context.mergedResourceDirs.joinToString(",") { "\"${escape(it.absolutePath)}\"" }
         val rJarEscaped = context.rJar?.let { "\"${escape(it.absolutePath)}\"" } ?: "null"
         val layoutLibEscaped = context.layoutLibDataDir?.let { "\"${escape(it.absolutePath)}\"" } ?: "null"
+        val libraryResEscaped = context.libraryResourceDirs.joinToString(",") { "\"${escape(it.absolutePath)}\"" }
+        val pkgEscaped = context.packageName?.let { "\"${escape(it)}\"" } ?: "null"
         val outEscaped = escape(previewsDir.absolutePath)
 
         configFile.writeText(
@@ -46,9 +53,12 @@ abstract class CompositorMcpTask : DefaultTask() {
               "mode": "mcp",
               "projectRoot": "$rootEscaped",
               "port": 3001,
+              "packageName": $pkgEscaped,
+              "compileSdkVersion": ${context.compileSdkVersion},
               "watchRoots": [$watchEscaped],
               "classesDirs": [$classesEscaped],
               "resourceDirs": [$resEscaped],
+              "libraryResourceDirs": [$libraryResEscaped],
               "rJar": $rJarEscaped,
               "layoutLibDataDir": $layoutLibEscaped,
               "outputDir": "$outEscaped",
@@ -60,7 +70,7 @@ abstract class CompositorMcpTask : DefaultTask() {
         val runtimeClasspath = project.configurations.getByName(CompositorPlugin.COMPOSITOR_RUNTIME_CONFIG)
         val fullClasspath = runtimeClasspath + project.files(context.allClasspathFiles())
 
-        project.javaexec { spec ->
+        execOperations.javaexec { spec ->
             spec.mainClass.set("io.compositor.pipeline.CompositorCli")
             spec.classpath = fullClasspath
             spec.args = listOf(configFile.absolutePath)

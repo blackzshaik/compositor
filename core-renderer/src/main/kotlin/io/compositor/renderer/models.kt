@@ -92,6 +92,10 @@ data class RenderRequest(
     val methodName: String,
     val classpath: List<File> = emptyList(),
     val resourceDirs: List<File> = emptyList(),
+    val libraryResourceDirs: List<File> = emptyList(),
+    val rJar: File? = null,
+    val packageName: String? = null,
+    val compileSdkVersion: Int = 35,
     val deviceConfig: CompositorDeviceConfig = CompositorDeviceConfig.PIXEL_5,
     val outputFile: File
 )

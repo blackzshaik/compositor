@@ -36,6 +36,39 @@ fun GreetingPreview() {
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview2() {
-    
     Greeting(" It takes some time to load")
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ResourceGreetingPreview() {
+    Greeting(androidx.compose.ui.res.stringResource(R.string.sample_resource_string))
+}
+
+@Preview(showBackground = true)
+@Composable
+fun IconGreetingPreview() {
+    Box(
+        modifier = Modifier
+            .background(Color(0xFF232323))
+            .padding(24.dp)
+    ) {
+        androidx.compose.foundation.layout.Row(
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+        ) {
+            androidx.compose.material3.Icon(
+                painter = androidx.compose.ui.res.painterResource(R.drawable.ic_sample_dot),
+                contentDescription = null,
+                tint = androidx.compose.ui.graphics.Color.Unspecified
+            )
+            androidx.compose.foundation.layout.Spacer(
+                modifier = Modifier.padding(start = 8.dp)
+            )
+            Text(
+                text = androidx.compose.ui.res.stringResource(R.string.sample_resource_string),
+                color = Color.White,
+                fontSize = 20.sp
+            )
+        }
+    }
 }
