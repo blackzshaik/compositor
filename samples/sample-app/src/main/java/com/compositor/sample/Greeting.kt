@@ -72,3 +72,30 @@ fun IconGreetingPreview() {
         }
     }
 }
+
+@Preview(showBackground = true)
+@Composable
+fun AnimatedGreetingPreview() {
+    val inspectionMode = androidx.compose.ui.platform.LocalInspectionMode.current
+    val visible = androidx.compose.runtime.remember {
+        androidx.compose.runtime.mutableStateOf(false)
+    }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        visible.value = true
+    }
+    androidx.compose.animation.AnimatedVisibility(
+        visible = visible.value || inspectionMode,
+        enter = androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(300))
+    ) {
+        Greeting("Animated Settled Preview (inspectionMode=$inspectionMode)")
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun DefaultParamGreetingPreview(
+    text: String = "Default Param Greeting",
+    modifier: Modifier = Modifier
+) {
+    Greeting(text, modifier)
+}

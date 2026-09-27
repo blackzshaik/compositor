@@ -66,6 +66,27 @@ object AndroidBuildBootstrap {
         }
     }
 
+    /**
+     * Sets animation duration scale to 0.0f so Android framework animators execute instantly.
+     */
+    @Suppress("TooGenericExceptionCaught", "SwallowedException")
+    fun setInstantAnimations(
+        classLoader: ClassLoader = Thread.currentThread().contextClassLoader
+            ?: AndroidBuildBootstrap::class.java.classLoader
+    ) {
+        try {
+            val valueAnimatorClass = Class.forName("android.animation.ValueAnimator", true, classLoader)
+            val setDurationScaleMethod = valueAnimatorClass.getDeclaredMethod(
+                "setDurationScale",
+                Float::class.javaPrimitiveType
+            )
+            setDurationScaleMethod.isAccessible = true
+            setDurationScaleMethod.invoke(null, 0.0f)
+        } catch (_: Throwable) {
+            // Ignored if ValueAnimator is not available on classloader
+        }
+    }
+
     private fun setStaticFieldIfNull(unsafe: Unsafe, targetClass: Class<*>, fieldName: String, value: String) {
         try {
             val field: Field = targetClass.getDeclaredField(fieldName)

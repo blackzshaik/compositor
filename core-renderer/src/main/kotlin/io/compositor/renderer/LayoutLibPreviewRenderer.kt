@@ -9,6 +9,8 @@ import java.awt.image.BufferedImage
 import java.io.File
 import java.io.PrintWriter
 import java.io.StringWriter
+import java.lang.reflect.InvocationTargetException
+import java.lang.reflect.UndeclaredThrowableException
 import java.util.jar.JarFile
 import javax.imageio.ImageIO
 import kotlin.jvm.functions.Function2
@@ -29,7 +31,10 @@ class LayoutLibPreviewRenderer(
     @Suppress("TooGenericExceptionCaught")
     fun render(request: RenderRequest): RenderResult = synchronized(RENDER_LOCK) {
         val startTime = System.currentTimeMillis()
-        println("[Compositor Renderer] Starting render for ${request.composableId} (${request.className}#${request.methodName})...")
+        println(
+            "[Compositor Renderer] Starting render for ${request.composableId} " +
+                "(${request.className}#${request.methodName})..."
+        )
 
         try {
             resetSdkState()
@@ -55,16 +60,34 @@ class LayoutLibPreviewRenderer(
             }
         } catch (t: Throwable) {
             resetSdkState()
+            val rootCause = unwrapThrowable(t)
             val durationMs = System.currentTimeMillis() - startTime
-            System.err.println("[Compositor Renderer] Render FAILED for ${request.composableId} in ${durationMs}ms: ${t.message}")
+            val message = rootCause.message ?: rootCause.javaClass.simpleName
+            System.err.println(
+                "[Compositor Renderer] Render FAILED for ${request.composableId} " +
+                    "in ${durationMs}ms: $message"
+            )
             val sw = StringWriter()
-            t.printStackTrace(PrintWriter(sw))
+            rootCause.printStackTrace(PrintWriter(sw))
             RenderResult.Failure(
-                errorMessage = t.message ?: "Unknown rendering failure",
-                cause = t,
+                errorMessage = message,
+                cause = rootCause,
                 stackTrace = sw.toString()
             )
         }
+    }
+
+    private fun unwrapThrowable(t: Throwable): Throwable {
+        var current: Throwable = t
+        while (current is InvocationTargetException || current is UndeclaredThrowableException) {
+            val target = if (current is InvocationTargetException) {
+                current.targetException ?: current.cause
+            } else {
+                current.cause
+            } ?: break
+            current = target
+        }
+        return current
     }
 
     private fun resetSdkState() {
@@ -102,11 +125,12 @@ class LayoutLibPreviewRenderer(
 
         sdk.setup()
         sdk.prepare()
+        AndroidBuildBootstrap.setInstantAnimations(classLoader)
 
         val rootBounds: ElementBounds?
         try {
             val contentLambda: (Any?, Any?) -> Unit = { composer, _ ->
-                ComposableInvoker.invokeComposable(
+                ComposableInvoker.invokeWithInspectionMode(
                     className = request.className,
                     methodName = request.methodName,
                     composer = composer,
@@ -114,13 +138,7 @@ class LayoutLibPreviewRenderer(
                 )
             }
 
-            val snapshotMethod = PaparazziSdk::class.java.methods.firstOrNull { method ->
-                method.name == "snapshot" &&
-                    method.parameterTypes.size == 1 &&
-                    method.parameterTypes[0] == Function2::class.java
-            } ?: error("PaparazziSdk.snapshot(Function2) method not found")
-
-            snapshotMethod.invoke(sdk, contentLambda)
+            renderWithSettledAnimation(sdk, contentLambda, classLoader)
             rootBounds = extractRootBounds(sdk)
         } finally {
             sdk.teardown()
@@ -143,6 +161,55 @@ class LayoutLibPreviewRenderer(
             durationMs = durationMs,
             rootBounds = rootBounds
         )
+    }
+
+    @Suppress("TooGenericExceptionCaught", "SwallowedException")
+    private fun renderWithSettledAnimation(
+        sdk: PaparazziSdk,
+        contentLambda: (Any?, Any?) -> Unit,
+        classLoader: ClassLoader
+    ) {
+        val composeViewClass = try {
+            Class.forName("androidx.compose.ui.platform.ComposeView", true, classLoader)
+        } catch (_: ClassNotFoundException) {
+            null
+        }
+
+        val takeSnapshotsMethod = PaparazziSdk::class.java.declaredMethods.firstOrNull {
+            it.name == "takeSnapshots" && it.parameterTypes.size == 4
+        }?.apply { isAccessible = true }
+
+        if (composeViewClass != null && takeSnapshotsMethod != null) {
+            try {
+                val hostView = composeViewClass.getConstructor(android.content.Context::class.java)
+                    .newInstance(sdk.context) as android.view.View
+                val setContentMethod = composeViewClass.getMethod("setContent", Function2::class.java)
+                setContentMethod.invoke(hostView, contentLambda)
+
+                // Render 2 frames:
+                // Frame 0: nowNanos = 0ms (attaches view, initializes recomposer, executes initial composition)
+                // Frame 1: nowNanos = 1_000_000_000L (1000ms / 1s settled animation state)
+                takeSnapshotsMethod.invoke(sdk, hostView, 0L, 1, 2)
+                return
+            } catch (e: InvocationTargetException) {
+                throw unwrapThrowable(e)
+            } catch (t: Throwable) {
+                println("[Compositor Renderer] Multi-frame animation rendering fallback: ${t.message}")
+            }
+        }
+
+        // Standard snapshot fallback
+        val snapshotMethod = PaparazziSdk::class.java.methods.firstOrNull { method ->
+            method.name == "snapshot" &&
+                method.parameterTypes.size == 1 &&
+                method.parameterTypes[0] == Function2::class.java
+        } ?: error("PaparazziSdk.snapshot(Function2) method not found")
+
+        try {
+            snapshotMethod.invoke(sdk, contentLambda)
+        } catch (e: InvocationTargetException) {
+            throw unwrapThrowable(e)
+        }
     }
 
     private fun createEnvironment(request: RenderRequest, classLoader: ClassLoader): Environment {
@@ -280,8 +347,9 @@ class LayoutLibPreviewRenderer(
                     }
                 }
             }
-        } catch (e: Exception) {
-            val msg = "[Compositor Renderer] Warning: Failed to extract packages from ${jarFile.name}: ${e.message}"
+        } catch (e: java.io.IOException) {
+            val msg = "[Compositor Renderer] Warning: Failed to extract packages from " +
+                "${jarFile.name}: ${e.message}"
             System.err.println(msg)
         }
         return packages.toList()
