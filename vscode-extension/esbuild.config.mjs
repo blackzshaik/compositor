@@ -14,6 +14,19 @@ const buildOptions = {
   logLevel: 'info',
 };
 
+import fs from 'node:fs';
+import path from 'node:path';
+
+function copyWebViewerDist() {
+  const src = path.resolve('..', 'web-viewer-react', 'dist');
+  const dst = path.resolve('dist', 'web-viewer');
+  if (fs.existsSync(src)) {
+    fs.mkdirSync(dst, { recursive: true });
+    fs.cpSync(src, dst, { recursive: true });
+    console.info('[Compositor Extension] Bundled web-viewer-react/dist into dist/web-viewer');
+  }
+}
+
 async function run() {
   if (isWatch) {
     const ctx = await esbuild.context(buildOptions);
@@ -21,6 +34,7 @@ async function run() {
     console.info('[Compositor Extension] Watching for source file changes...');
   } else {
     await esbuild.build(buildOptions);
+    copyWebViewerDist();
     console.info('[Compositor Extension] Build completed successfully.');
   }
 }

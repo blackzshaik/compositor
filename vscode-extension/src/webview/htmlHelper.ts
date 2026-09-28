@@ -15,6 +15,10 @@ export function getNonce(): string {
 }
 
 export function getDistPath(extensionUri: vscode.Uri): string {
+  const bundledDist = path.resolve(extensionUri.fsPath, 'dist', 'web-viewer');
+  if (fs.existsSync(path.join(bundledDist, 'index.html'))) {
+    return bundledDist;
+  }
   const reactDist = path.resolve(extensionUri.fsPath, '..', 'web-viewer-react', 'dist');
   if (fs.existsSync(path.join(reactDist, 'index.html'))) {
     return reactDist;

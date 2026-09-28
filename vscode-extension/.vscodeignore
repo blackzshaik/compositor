@@ -1,0 +1,10 @@
+.vscode/**
+.vscode-test/**
+src/**
+node_modules/**
+tsconfig.json
+vitest.config.ts
+eslint.config.mjs
+esbuild.config.mjs
+*.tsbuildinfo
+*.log

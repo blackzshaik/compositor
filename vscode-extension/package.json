@@ -13,7 +13,7 @@
     "url": "https://github.com/compositor-org/compositor/issues"
   },
   "homepage": "https://github.com/compositor-org/compositor#readme",
-  "icon": "resources/compositor-icon.svg",
+  "icon": "resources/compositor-icon.png",
   "engines": {
     "vscode": "^1.90.0"
   },

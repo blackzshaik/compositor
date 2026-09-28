@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag name (e.g. v0.1.0-alpha01)'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -12,6 +18,9 @@ jobs:
   build-and-release:
     name: Build & Publish Release
     runs-on: ubuntu-latest
+    env:
+      VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      OVSX_PAT: ${{ secrets.OVSX_PAT }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -43,7 +52,8 @@ jobs:
           cd vscode-extension
           npm ci
           npm run build
-          npx @vscode/vsce package --no-dependencies --out compositor-preview-${{ github.ref_name }}.vsix
+          TAG="${{ inputs.tag_name || github.ref_name }}"
+          npx @vscode/vsce package --no-dependencies --out "compositor-preview-${TAG}.vsix"
 
       - name: Build Gradle Artifacts
         env:
@@ -53,24 +63,23 @@ jobs:
 
       - name: Publish VS Code Extension to Marketplace (if token configured)
         if: env.VSCE_PAT != ''
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
           cd vscode-extension
-          npx @vscode/vsce publish --packagePath compositor-preview-${{ github.ref_name }}.vsix
+          TAG="${{ inputs.tag_name || github.ref_name }}"
+          npx @vscode/vsce publish --packagePath "compositor-preview-${TAG}.vsix"
 
       - name: Publish VS Code Extension to Open VSX (if token configured)
         if: env.OVSX_PAT != ''
-        env:
-          OVSX_PAT: ${{ secrets.OVSX_PAT }}
         run: |
           cd vscode-extension
-          npx ovsx publish compositor-preview-${{ github.ref_name }}.vsix -p ${{ secrets.OVSX_PAT }}
+          TAG="${{ inputs.tag_name || github.ref_name }}"
+          npx ovsx publish "compositor-preview-${TAG}.vsix" -p ${{ secrets.OVSX_PAT }}
 
       - name: Create GitHub Release & Upload VSIX Asset
         uses: softprops/action-gh-release@v2
         with:
-          name: Compositor ${{ github.ref_name }}
+          tag_name: ${{ inputs.tag_name || github.ref_name }}
+          name: Compositor ${{ inputs.tag_name || github.ref_name }}
           draft: false
           prerelease: true
           generate_release_notes: true
